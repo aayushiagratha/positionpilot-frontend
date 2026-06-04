@@ -533,20 +533,73 @@ function Index() {
                 <TabsTrigger value="gtm">GTM</TabsTrigger>
                 <TabsTrigger value="seo">SEO</TabsTrigger>
               </TabsList>
-              {(["positioning", "icp", "messaging", "gtm", "seo"] as const).map((k) => (
-                <TabsContent key={k} value={k}>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="capitalize">{k}</CardTitle>
-                    </CardHeader>
+              <TabsContent value="positioning">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Section title="Positioning Statement" body={stage1?.positioning_statement} />
+                  <Section title="Differentiation Pillars" items={stage1?.differentiation_pillars} />
+                </div>
+              </TabsContent>
+              <TabsContent value="icp">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Section title="ICP Summary" body={stage1?.icp_summary} />
+                  <Section title="Buying Triggers" items={stage1?.buying_triggers} />
+                </div>
+              </TabsContent>
+              <TabsContent value="messaging">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Section title="Hero Headline" body={stage2.messaging_output?.hero_headline} />
+                  <Section title="Subheadline / Value Prop" body={stage2.messaging_output?.subheadline_value_prop} />
+                  <Section title="Conversion Hook" body={stage2.messaging_output?.conversion_hook} />
+                  <Card className="md:col-span-2">
+                    <CardHeader><CardTitle className="text-base">Core Messaging Pillars</CardTitle></CardHeader>
                     <CardContent>
-                      <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground">
-                        {stage2[k] || "No content returned for this section."}
-                      </pre>
+                      {stage2.messaging_output?.core_messaging_pillars?.length ? (
+                        <ul className="space-y-4">
+                          {stage2.messaging_output.core_messaging_pillars.map((p, i) => (
+                            <li key={i}>
+                              <div className="font-semibold text-sm">{p.pillar_title}</div>
+                              <div className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">{p.supporting_copy}</div>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : <p className="text-sm text-muted-foreground">—</p>}
                     </CardContent>
                   </Card>
-                </TabsContent>
-              ))}
+                </div>
+              </TabsContent>
+              <TabsContent value="gtm">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Section title="Primary Distribution Channels" items={stage2.gtm_output?.primary_distribution_channels} />
+                  <Section title="Growth Loops Identified" items={stage2.gtm_output?.growth_loops_identified} />
+                  <Section title="Launch Sequencing Playbook" body={stage2.gtm_output?.launch_sequencing_playbook} />
+                  <Section title="Initial 30-Day Milestones" items={stage2.gtm_output?.initial_30_day_milestones} />
+                </div>
+              </TabsContent>
+              <TabsContent value="seo">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Section title="AEO Citation Strategy" body={stage2.seo_output?.aeo_citation_strategy} />
+                  <Section title="High-Intent Search Queries" items={stage2.seo_output?.high_intent_search_queries} />
+                  <Card className="md:col-span-2">
+                    <CardHeader><CardTitle className="text-base">Topical Authority Clusters</CardTitle></CardHeader>
+                    <CardContent>
+                      {stage2.seo_output?.topical_authority_clusters?.length ? (
+                        <ul className="space-y-4">
+                          {stage2.seo_output.topical_authority_clusters.map((c, i) => (
+                            <li key={i}>
+                              <div className="font-semibold text-sm">{c.core_pillar}</div>
+                              {c.sub_topics?.length ? (
+                                <ul className="mt-1 list-disc pl-5 text-sm text-muted-foreground">
+                                  {c.sub_topics.map((s, j) => <li key={j}>{s}</li>)}
+                                </ul>
+                              ) : null}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : <p className="text-sm text-muted-foreground">—</p>}
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
             </Tabs>
           </div>
         )}
