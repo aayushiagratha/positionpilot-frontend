@@ -107,24 +107,15 @@ function toStringArray(v: unknown): string[] {
 }
 
 function normalizeStage1(raw: unknown): Stage1Response {
-  const r = (Array.isArray(raw) ? raw[0] : raw) as Record<string, unknown> | undefined;
-  if (!r) return {};
-  const positioning = (r.positioning_output ?? {}) as Record<string, unknown>;
-  const icp = (r.icp_output ?? {}) as Record<string, unknown>;
+  const data = (Array.isArray(raw) ? raw[0] : raw) as any;
+  if (!data) return {};
   return {
     generation_run_id:
-      (pick(r, ["generation_run_id", "run_id", "id"]) as string | number | undefined)?.toString() ?? undefined,
-    positioning_statement: asText(
-      pick(r, ["positioning_statement", "positioning"]) ?? positioning.positioning_statement,
-    ),
-    icp_summary: asText(pick(r, ["icp_summary", "icp"]) ?? icp.primary_target_persona),
-    differentiation_pillars: toStringArray(
-      pick(r, ["differentiation_pillars", "differentiation"]) ?? positioning.differentiation_pillars,
-    ),
-    buying_triggers: toStringArray(
-      pick(r, ["buying_triggers", "triggers"]) ?? icp.buying_triggers,
-    ),
-    ...r,
+      data.generation_run_id != null ? String(data.generation_run_id) : undefined,
+    positioning_statement: data.positioning_output?.positioning_statement,
+    icp_summary: data.icp_output?.primary_target_persona,
+    differentiation_pillars: data.positioning_output?.differentiation_pillars || [],
+    buying_triggers: data.icp_output?.buying_triggers || [],
   };
 }
 
@@ -230,16 +221,6 @@ function Index() {
         throw new Error(`Stage 1 returned non-JSON response: ${text.slice(0, 500)}`);
       }
       const s1 = normalizeStage1(data);
-      const hasContent =
-        s1.positioning_statement ||
-        s1.icp_summary ||
-        (s1.differentiation_pillars && s1.differentiation_pillars.length > 0) ||
-        (s1.buying_triggers && s1.buying_triggers.length > 0);
-      if (!hasContent) {
-        throw new Error(
-          `Stage 1 returned no recognizable fields. Raw response: ${text.slice(0, 500) || "<empty>"}`,
-        );
-      }
       setStage1(s1);
       if (s1.generation_run_id) {
         upsertRecent({
