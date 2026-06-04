@@ -566,16 +566,25 @@ function Index() {
   );
 }
 
-function Section({ title, body }: { title: string; body?: string }) {
+function Section({ title, body, items }: { title: string; body?: string; items?: string[] }) {
+  const hasItems = items && items.length > 0;
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground">
-          {body || "—"}
-        </pre>
+        {hasItems ? (
+          <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-foreground">
+            {items!.map((item, i) => (
+              <li key={i} className="whitespace-pre-wrap">{item}</li>
+            ))}
+          </ul>
+        ) : (
+          <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground">
+            {body || "—"}
+          </pre>
+        )}
       </CardContent>
     </Card>
   );
