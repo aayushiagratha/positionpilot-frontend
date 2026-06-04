@@ -511,8 +511,8 @@ function Index() {
             <div className="grid gap-4 md:grid-cols-2">
               <Section title="Positioning Statement" body={stage1.positioning_statement} />
               <Section title="ICP Summary" body={stage1.icp_summary} />
-              <Section title="Differentiation Pillars" body={stage1.differentiation_pillars} />
-              <Section title="Buying Triggers" body={stage1.buying_triggers} />
+              <Section title="Differentiation Pillars" items={stage1.differentiation_pillars} />
+              <Section title="Buying Triggers" items={stage1.buying_triggers} />
             </div>
             <div className="flex flex-wrap justify-end gap-3">
               <Button variant="outline" onClick={startOver} disabled={loading}>
