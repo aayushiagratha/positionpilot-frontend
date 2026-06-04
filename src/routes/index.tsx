@@ -22,7 +22,7 @@ export const Route = createFileRoute("/")({
 });
 
 const STAGE1_URL = "https://n8n-production-0b71.up.railway.app/webhook/positionpilot-stage1";
-const APPROVE_URL = "https://n8n-production-0b71.up.railway.app/webhook/positionpilot-approve";
+const STAGE2_URL = "https://n8n-production-0b71.up.railway.app/webhook/positionpilot-stage2";
 
 const FIELDS = [
   { key: "company_name", label: "Company Name", type: "input", placeholder: "Acme Inc." },
@@ -251,19 +251,19 @@ function Index() {
     setRawResponse(null);
     try {
       const { res, text } = await postWebhook(
-        APPROVE_URL,
+        STAGE2_URL,
         { generation_run_id: stage1.generation_run_id },
-        "Approve",
+        "Stage 2",
       );
       setRawResponse(text);
       if (!res.ok) {
-        throw new Error(`Approve failed (${res.status} ${res.statusText}): ${text || "<empty body>"}`);
+        throw new Error(`Stage 2 failed (${res.status} ${res.statusText}): ${text || "<empty body>"}`);
       }
       let data: unknown;
       try {
         data = text ? JSON.parse(text) : {};
       } catch {
-        throw new Error(`Approve returned non-JSON response: ${text.slice(0, 500)}`);
+        throw new Error(`Stage 2 returned non-JSON response: ${text.slice(0, 500)}`);
       }
       const s2 = normalizeStage2(data);
       setStage2(s2);
@@ -421,9 +421,13 @@ function Index() {
         {screen === "review" && loading && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-semibold tracking-tight">Generating your foundation…</h2>
+              <h2 className="text-2xl font-semibold tracking-tight">
+                {stage1 ? "Generating your full strategy…" : "Generating your foundation…"}
+              </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Calling the strategy agent. This usually takes 20–60 seconds.
+                {stage1
+                  ? "This takes 2-3 minutes."
+                  : "Calling the strategy agent. This usually takes 20–60 seconds."}
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
