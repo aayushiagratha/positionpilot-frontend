@@ -134,6 +134,8 @@ function Index() {
   const [stage1, setStage1] = useState<Stage1Response | null>(null);
   const [stage2, setStage2] = useState<Stage2Response | null>(null);
   const [recent, setRecent] = useState<RecentRun[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [rawResponse, setRawResponse] = useState<string | null>(null);
 
   useEffect(() => {
     setRecent(loadRecent());
@@ -155,15 +157,34 @@ function Index() {
       return;
     }
     setLoading(true);
+    setError(null);
+    setRawResponse(null);
+    setScreen("review");
     try {
       const res = await fetch(STAGE1_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      if (!res.ok) throw new Error(`Stage 1 failed (${res.status})`);
-      const data = await res.json();
+      const text = await res.text();
+      setRawResponse(text);
+      if (!res.ok) {
+        throw new Error(`Stage 1 failed (${res.status} ${res.statusText}): ${text || "<empty body>"}`);
+      }
+      let data: unknown;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (parseErr) {
+        throw new Error(`Stage 1 returned non-JSON response: ${text.slice(0, 500)}`);
+      }
       const s1 = normalizeStage1(data);
+      const hasContent =
+        s1.positioning_statement || s1.icp_summary || s1.differentiation_pillars || s1.buying_triggers;
+      if (!hasContent) {
+        throw new Error(
+          `Stage 1 returned no recognizable fields. Raw response: ${text.slice(0, 500) || "<empty>"}`,
+        );
+      }
       setStage1(s1);
       if (s1.generation_run_id) {
         upsertRecent({
@@ -174,10 +195,11 @@ function Index() {
           stage2: null,
         });
       }
-      setScreen("review");
     } catch (err) {
       console.error(err);
-      toast.error(err instanceof Error ? err.message : "Failed to generate strategy");
+      const msg = err instanceof Error ? err.message : "Failed to generate strategy";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -189,14 +211,23 @@ function Index() {
       return;
     }
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch(APPROVE_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ generation_run_id: stage1.generation_run_id }),
       });
-      if (!res.ok) throw new Error(`Approve failed (${res.status})`);
-      const data = await res.json();
+      const text = await res.text();
+      if (!res.ok) {
+        throw new Error(`Approve failed (${res.status} ${res.statusText}): ${text || "<empty body>"}`);
+      }
+      let data: unknown;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error(`Approve returned non-JSON response: ${text.slice(0, 500)}`);
+      }
       const s2 = normalizeStage2(data);
       setStage2(s2);
       if (stage1?.generation_run_id) {
@@ -211,7 +242,9 @@ function Index() {
       setScreen("results");
     } catch (err) {
       console.error(err);
-      toast.error(err instanceof Error ? err.message : "Failed to generate full strategy");
+      const msg = err instanceof Error ? err.message : "Failed to generate full strategy";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -220,6 +253,8 @@ function Index() {
   const startOver = () => {
     setStage1(null);
     setStage2(null);
+    setError(null);
+    setRawResponse(null);
     setScreen("form");
   };
 
@@ -332,7 +367,70 @@ function Index() {
           </section>
         )}
 
-        {screen === "review" && stage1 && (
+        {screen === "review" && loading && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight">Generating your foundation…</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Calling the strategy agent. This usually takes 20–60 seconds.
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {["Positioning Statement", "ICP Summary", "Differentiation Pillars", "Buying Triggers"].map((t) => (
+                <Card key={t}>
+                  <CardHeader>
+                    <CardTitle className="text-base">{t}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="h-3 w-5/6 animate-pulse rounded bg-muted" />
+                      <div className="h-3 w-4/6 animate-pulse rounded bg-muted" />
+                      <div className="h-3 w-3/6 animate-pulse rounded bg-muted" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {screen === "review" && !loading && error && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight text-destructive">Something went wrong</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                The Stage 1 API call did not return usable data.
+              </p>
+            </div>
+            <Card className="border-destructive/40">
+              <CardHeader>
+                <CardTitle className="text-base text-destructive">Error</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-destructive">
+                  {error}
+                </pre>
+              </CardContent>
+            </Card>
+            {rawResponse && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Raw response</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words font-mono text-xs leading-relaxed">
+                    {rawResponse || "<empty>"}
+                  </pre>
+                </CardContent>
+              </Card>
+            )}
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={startOver}>Back to form</Button>
+            </div>
+          </div>
+        )}
+
+        {screen === "review" && !loading && !error && stage1 && (
           <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-semibold tracking-tight">Review your foundation</h2>
