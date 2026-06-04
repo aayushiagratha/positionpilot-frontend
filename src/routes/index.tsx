@@ -77,11 +77,23 @@ type Stage1Response = {
 };
 
 type Stage2Response = {
-  positioning?: string;
-  icp?: string;
-  messaging?: string;
-  gtm?: string;
-  seo?: string;
+  messaging_output?: {
+    hero_headline?: string;
+    subheadline_value_prop?: string;
+    core_messaging_pillars?: Array<{ pillar_title?: string; supporting_copy?: string }>;
+    conversion_hook?: string;
+  };
+  gtm_output?: {
+    primary_distribution_channels?: string[];
+    launch_sequencing_playbook?: string;
+    growth_loops_identified?: string[];
+    initial_30_day_milestones?: string[];
+  };
+  seo_output?: {
+    topical_authority_clusters?: Array<{ core_pillar?: string; sub_topics?: string[] }>;
+    aeo_citation_strategy?: string;
+    high_intent_search_queries?: string[];
+  };
   [k: string]: unknown;
 };
 
@@ -120,16 +132,8 @@ function normalizeStage1(raw: unknown): Stage1Response {
 }
 
 function normalizeStage2(raw: unknown): Stage2Response {
-  const r = (Array.isArray(raw) ? raw[0] : raw) as Record<string, unknown> | undefined;
-  if (!r) return {};
-  return {
-    positioning: asText(pick(r, ["positioning", "positioning_output", "positioning_agent"])),
-    icp: asText(pick(r, ["icp", "icp_output", "icp_agent"])),
-    messaging: asText(pick(r, ["messaging", "messaging_output", "messaging_agent"])),
-    gtm: asText(pick(r, ["gtm", "gtm_output", "gtm_agent", "go_to_market"])),
-    seo: asText(pick(r, ["seo", "seo_output", "seo_agent"])),
-    ...r,
-  };
+  const r = (Array.isArray(raw) ? raw[0] : raw) as Stage2Response | undefined;
+  return r || {};
 }
 
 function formatUnknownError(err: unknown, fallback: string) {
