@@ -125,6 +125,39 @@ function normalizeStage2(raw: unknown): Stage2Response {
   };
 }
 
+function formatUnknownError(err: unknown, fallback: string) {
+  if (err instanceof Error) {
+    return [err.name, err.message, err.stack].filter(Boolean).join("\n");
+  }
+  return typeof err === "string" ? err : fallback;
+}
+
+async function postWebhook(url: string, payload: unknown, label: string) {
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const text = await res.text();
+    const details = {
+      label,
+      url,
+      ok: res.ok,
+      status: res.status,
+      statusText: res.statusText,
+      headers: Object.fromEntries(res.headers.entries()),
+      body: text || "<empty body>",
+    };
+    console.log("PositionPilot webhook response", details);
+    return { res, text, details };
+  } catch (err) {
+    const message = formatUnknownError(err, `${label} request failed before a response was received`);
+    console.error("PositionPilot webhook network error", { label, url, error: err, message });
+    throw new Error(`${label} network error:\n${message}`);
+  }
+}
+
 function Index() {
   const [screen, setScreen] = useState<"form" | "review" | "results">("form");
   const [form, setForm] = useState<FormState>(() =>
@@ -161,12 +194,7 @@ function Index() {
     setRawResponse(null);
     setScreen("review");
     try {
-      const res = await fetch(STAGE1_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const text = await res.text();
+      const { res, text } = await postWebhook(STAGE1_URL, form, "Stage 1");
       setRawResponse(text);
       if (!res.ok) {
         throw new Error(`Stage 1 failed (${res.status} ${res.statusText}): ${text || "<empty body>"}`);
@@ -196,8 +224,8 @@ function Index() {
         });
       }
     } catch (err) {
-      console.error(err);
-      const msg = err instanceof Error ? err.message : "Failed to generate strategy";
+      const msg = formatUnknownError(err, "Failed to generate strategy");
+      console.error("PositionPilot Stage 1 error", { error: err, message: msg });
       setError(msg);
       toast.error(msg);
     } finally {
@@ -212,13 +240,14 @@ function Index() {
     }
     setLoading(true);
     setError(null);
+    setRawResponse(null);
     try {
-      const res = await fetch(APPROVE_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ generation_run_id: stage1.generation_run_id }),
-      });
-      const text = await res.text();
+      const { res, text } = await postWebhook(
+        APPROVE_URL,
+        { generation_run_id: stage1.generation_run_id },
+        "Approve",
+      );
+      setRawResponse(text);
       if (!res.ok) {
         throw new Error(`Approve failed (${res.status} ${res.statusText}): ${text || "<empty body>"}`);
       }
@@ -241,8 +270,8 @@ function Index() {
       }
       setScreen("results");
     } catch (err) {
-      console.error(err);
-      const msg = err instanceof Error ? err.message : "Failed to generate full strategy";
+      const msg = formatUnknownError(err, "Failed to generate full strategy");
+      console.error("PositionPilot approval error", { error: err, message: msg });
       setError(msg);
       toast.error(msg);
     } finally {
@@ -292,6 +321,20 @@ function Index() {
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-10">
+        {error && (
+          <div className="mb-6 rounded-md border border-destructive/50 bg-destructive/10 p-4" role="alert">
+            <div className="text-sm font-semibold text-destructive">API request failed</div>
+            <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-destructive">
+              {error}
+            </pre>
+            {rawResponse && (
+              <pre className="mt-3 max-h-60 overflow-auto whitespace-pre-wrap break-words rounded border border-destructive/20 p-3 font-mono text-xs leading-relaxed">
+                {rawResponse}
+              </pre>
+            )}
+          </div>
+        )}
+
         {screen === "form" && (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
