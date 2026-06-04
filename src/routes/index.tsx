@@ -243,7 +243,7 @@ function Index() {
       <header className="border-b">
         <div className="mx-auto max-w-5xl px-6 py-5 flex items-center justify-between">
           <button onClick={startOver} className="text-left">
-            <h1 className="text-xl font-semibold tracking-tight">PositionPilot</h1>
+            <h1 className="text-4xl font-bold tracking-tight">PositionPilot</h1>
             <p className="text-xs text-muted-foreground">Strategic positioning, on demand</p>
           </button>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
