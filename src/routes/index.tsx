@@ -194,12 +194,7 @@ function Index() {
     setRawResponse(null);
     setScreen("review");
     try {
-      const res = await fetch(STAGE1_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const text = await res.text();
+      const { res, text } = await postWebhook(STAGE1_URL, form, "Stage 1");
       setRawResponse(text);
       if (!res.ok) {
         throw new Error(`Stage 1 failed (${res.status} ${res.statusText}): ${text || "<empty body>"}`);
@@ -229,8 +224,8 @@ function Index() {
         });
       }
     } catch (err) {
-      console.error(err);
-      const msg = err instanceof Error ? err.message : "Failed to generate strategy";
+      const msg = formatUnknownError(err, "Failed to generate strategy");
+      console.error("PositionPilot Stage 1 error", { error: err, message: msg });
       setError(msg);
       toast.error(msg);
     } finally {
@@ -245,13 +240,14 @@ function Index() {
     }
     setLoading(true);
     setError(null);
+    setRawResponse(null);
     try {
-      const res = await fetch(APPROVE_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ generation_run_id: stage1.generation_run_id }),
-      });
-      const text = await res.text();
+      const { res, text } = await postWebhook(
+        APPROVE_URL,
+        { generation_run_id: stage1.generation_run_id },
+        "Approve",
+      );
+      setRawResponse(text);
       if (!res.ok) {
         throw new Error(`Approve failed (${res.status} ${res.statusText}): ${text || "<empty body>"}`);
       }
@@ -274,8 +270,8 @@ function Index() {
       }
       setScreen("results");
     } catch (err) {
-      console.error(err);
-      const msg = err instanceof Error ? err.message : "Failed to generate full strategy";
+      const msg = formatUnknownError(err, "Failed to generate full strategy");
+      console.error("PositionPilot approval error", { error: err, message: msg });
       setError(msg);
       toast.error(msg);
     } finally {
