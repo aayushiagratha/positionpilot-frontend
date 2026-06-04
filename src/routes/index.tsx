@@ -321,6 +321,20 @@ function Index() {
       </header>
 
       <main className="mx-auto max-w-5xl px-6 py-10">
+        {error && (
+          <div className="mb-6 rounded-md border border-destructive/50 bg-destructive/10 p-4" role="alert">
+            <div className="text-sm font-semibold text-destructive">API request failed</div>
+            <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-destructive">
+              {error}
+            </pre>
+            {rawResponse && (
+              <pre className="mt-3 max-h-60 overflow-auto whitespace-pre-wrap break-words rounded border border-destructive/20 p-3 font-mono text-xs leading-relaxed">
+                {rawResponse}
+              </pre>
+            )}
+          </div>
+        )}
+
         {screen === "form" && (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
