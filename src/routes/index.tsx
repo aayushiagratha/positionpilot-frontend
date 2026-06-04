@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,6 +36,36 @@ const FIELDS = [
 ] as const;
 
 type FormState = Record<string, string>;
+
+type RecentRun = {
+  generation_run_id: string;
+  company_name: string;
+  created_at: number;
+  stage1: Stage1Response;
+  stage2: Stage2Response | null;
+};
+
+const RECENT_KEY = "positionpilot:recent_runs";
+const RECENT_MAX = 10;
+
+function loadRecent(): RecentRun[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(RECENT_KEY);
+    return raw ? (JSON.parse(raw) as RecentRun[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecent(runs: RecentRun[]) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(RECENT_KEY, JSON.stringify(runs.slice(0, RECENT_MAX)));
+  } catch {
+    /* ignore quota */
+  }
+}
 
 type Stage1Response = {
   generation_run_id?: string;
@@ -103,6 +133,19 @@ function Index() {
   const [loading, setLoading] = useState(false);
   const [stage1, setStage1] = useState<Stage1Response | null>(null);
   const [stage2, setStage2] = useState<Stage2Response | null>(null);
+  const [recent, setRecent] = useState<RecentRun[]>([]);
+
+  useEffect(() => {
+    setRecent(loadRecent());
+  }, []);
+
+  const upsertRecent = (run: RecentRun) => {
+    setRecent((prev) => {
+      const next = [run, ...prev.filter((r) => r.generation_run_id !== run.generation_run_id)].slice(0, RECENT_MAX);
+      saveRecent(next);
+      return next;
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,7 +163,17 @@ function Index() {
       });
       if (!res.ok) throw new Error(`Stage 1 failed (${res.status})`);
       const data = await res.json();
-      setStage1(normalizeStage1(data));
+      const s1 = normalizeStage1(data);
+      setStage1(s1);
+      if (s1.generation_run_id) {
+        upsertRecent({
+          generation_run_id: s1.generation_run_id,
+          company_name: form.company_name || "Untitled",
+          created_at: Date.now(),
+          stage1: s1,
+          stage2: null,
+        });
+      }
       setScreen("review");
     } catch (err) {
       console.error(err);
@@ -144,7 +197,17 @@ function Index() {
       });
       if (!res.ok) throw new Error(`Approve failed (${res.status})`);
       const data = await res.json();
-      setStage2(normalizeStage2(data));
+      const s2 = normalizeStage2(data);
+      setStage2(s2);
+      if (stage1?.generation_run_id) {
+        upsertRecent({
+          generation_run_id: stage1.generation_run_id,
+          company_name: form.company_name || stage1.generation_run_id,
+          created_at: Date.now(),
+          stage1,
+          stage2: s2,
+        });
+      }
       setScreen("results");
     } catch (err) {
       console.error(err);
@@ -158,6 +221,20 @@ function Index() {
     setStage1(null);
     setStage2(null);
     setScreen("form");
+  };
+
+  const openRun = (run: RecentRun) => {
+    setStage1(run.stage1);
+    setStage2(run.stage2);
+    setScreen(run.stage2 ? "results" : "review");
+  };
+
+  const deleteRun = (id: string) => {
+    setRecent((prev) => {
+      const next = prev.filter((r) => r.generation_run_id !== id);
+      saveRecent(next);
+      return next;
+    });
   };
 
   return (
@@ -217,6 +294,42 @@ function Index() {
               </Button>
             </div>
           </form>
+        )}
+
+        {screen === "form" && recent.length > 0 && (
+          <section className="mt-12">
+            <div className="mb-4 flex items-end justify-between">
+              <div>
+                <h3 className="text-lg font-semibold tracking-tight">Recent Runs</h3>
+                <p className="text-xs text-muted-foreground">Reopen a previous generation.</p>
+              </div>
+            </div>
+            <ul className="divide-y rounded-md border">
+              {recent.map((r) => (
+                <li key={r.generation_run_id} className="flex items-center justify-between gap-4 px-4 py-3">
+                  <button onClick={() => openRun(r)} className="min-w-0 flex-1 text-left">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate font-medium">{r.company_name}</span>
+                      <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                        {r.stage2 ? "Full" : "Draft"}
+                      </span>
+                    </div>
+                    <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                      {new Date(r.created_at).toLocaleString()} · {r.generation_run_id}
+                    </div>
+                  </button>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => openRun(r)}>
+                      Open
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => deleteRun(r.generation_run_id)}>
+                      Remove
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
 
         {screen === "review" && stage1 && (
