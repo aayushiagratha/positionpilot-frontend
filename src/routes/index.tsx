@@ -71,8 +71,8 @@ type Stage1Response = {
   generation_run_id?: string;
   positioning_statement?: string;
   icp_summary?: string;
-  differentiation_pillars?: string;
-  buying_triggers?: string;
+  differentiation_pillars?: string[];
+  buying_triggers?: string[];
   [k: string]: unknown;
 };
 
@@ -99,15 +99,31 @@ function pick(obj: Record<string, unknown> | undefined, keys: string[]): unknown
   return undefined;
 }
 
+function toStringArray(v: unknown): string[] {
+  if (Array.isArray(v)) return v.map((x) => (typeof x === "string" ? x : JSON.stringify(x)));
+  if (v == null || v === "") return [];
+  if (typeof v === "string") return [v];
+  return [JSON.stringify(v)];
+}
+
 function normalizeStage1(raw: unknown): Stage1Response {
   const r = (Array.isArray(raw) ? raw[0] : raw) as Record<string, unknown> | undefined;
   if (!r) return {};
+  const positioning = (r.positioning_output ?? {}) as Record<string, unknown>;
+  const icp = (r.icp_output ?? {}) as Record<string, unknown>;
   return {
-    generation_run_id: (pick(r, ["generation_run_id", "run_id", "id"]) as string) ?? undefined,
-    positioning_statement: asText(pick(r, ["positioning_statement", "positioning"])),
-    icp_summary: asText(pick(r, ["icp_summary", "icp"])),
-    differentiation_pillars: asText(pick(r, ["differentiation_pillars", "differentiation"])),
-    buying_triggers: asText(pick(r, ["buying_triggers", "triggers"])),
+    generation_run_id:
+      (pick(r, ["generation_run_id", "run_id", "id"]) as string | number | undefined)?.toString() ?? undefined,
+    positioning_statement: asText(
+      pick(r, ["positioning_statement", "positioning"]) ?? positioning.positioning_statement,
+    ),
+    icp_summary: asText(pick(r, ["icp_summary", "icp"]) ?? icp.primary_target_persona),
+    differentiation_pillars: toStringArray(
+      pick(r, ["differentiation_pillars", "differentiation"]) ?? positioning.differentiation_pillars,
+    ),
+    buying_triggers: toStringArray(
+      pick(r, ["buying_triggers", "triggers"]) ?? icp.buying_triggers,
+    ),
     ...r,
   };
 }
@@ -132,12 +148,15 @@ function formatUnknownError(err: unknown, fallback: string) {
   return typeof err === "string" ? err : fallback;
 }
 
-async function postWebhook(url: string, payload: unknown, label: string) {
+async function postWebhook(url: string, payload: unknown, label: string, timeoutMs = 180_000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      signal: controller.signal,
     });
     const text = await res.text();
     const details = {
@@ -152,9 +171,14 @@ async function postWebhook(url: string, payload: unknown, label: string) {
     console.log("PositionPilot webhook response", details);
     return { res, text, details };
   } catch (err) {
-    const message = formatUnknownError(err, `${label} request failed before a response was received`);
+    const aborted = (err as { name?: string } | null)?.name === "AbortError";
+    const message = aborted
+      ? `${label} request timed out after ${Math.round(timeoutMs / 1000)}s`
+      : formatUnknownError(err, `${label} request failed before a response was received`);
     console.error("PositionPilot webhook network error", { label, url, error: err, message });
     throw new Error(`${label} network error:\n${message}`);
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -207,7 +231,10 @@ function Index() {
       }
       const s1 = normalizeStage1(data);
       const hasContent =
-        s1.positioning_statement || s1.icp_summary || s1.differentiation_pillars || s1.buying_triggers;
+        s1.positioning_statement ||
+        s1.icp_summary ||
+        (s1.differentiation_pillars && s1.differentiation_pillars.length > 0) ||
+        (s1.buying_triggers && s1.buying_triggers.length > 0);
       if (!hasContent) {
         throw new Error(
           `Stage 1 returned no recognizable fields. Raw response: ${text.slice(0, 500) || "<empty>"}`,
@@ -484,8 +511,8 @@ function Index() {
             <div className="grid gap-4 md:grid-cols-2">
               <Section title="Positioning Statement" body={stage1.positioning_statement} />
               <Section title="ICP Summary" body={stage1.icp_summary} />
-              <Section title="Differentiation Pillars" body={stage1.differentiation_pillars} />
-              <Section title="Buying Triggers" body={stage1.buying_triggers} />
+              <Section title="Differentiation Pillars" items={stage1.differentiation_pillars} />
+              <Section title="Buying Triggers" items={stage1.buying_triggers} />
             </div>
             <div className="flex flex-wrap justify-end gap-3">
               <Button variant="outline" onClick={startOver} disabled={loading}>
@@ -539,16 +566,25 @@ function Index() {
   );
 }
 
-function Section({ title, body }: { title: string; body?: string }) {
+function Section({ title, body, items }: { title: string; body?: string; items?: string[] }) {
+  const hasItems = items && items.length > 0;
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground">
-          {body || "—"}
-        </pre>
+        {hasItems ? (
+          <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-foreground">
+            {items!.map((item, i) => (
+              <li key={i} className="whitespace-pre-wrap">{item}</li>
+            ))}
+          </ul>
+        ) : (
+          <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground">
+            {body || "—"}
+          </pre>
+        )}
       </CardContent>
     </Card>
   );
