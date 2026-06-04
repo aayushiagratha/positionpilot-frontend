@@ -125,6 +125,39 @@ function normalizeStage2(raw: unknown): Stage2Response {
   };
 }
 
+function formatUnknownError(err: unknown, fallback: string) {
+  if (err instanceof Error) {
+    return [err.name, err.message, err.stack].filter(Boolean).join("\n");
+  }
+  return typeof err === "string" ? err : fallback;
+}
+
+async function postWebhook(url: string, payload: unknown, label: string) {
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const text = await res.text();
+    const details = {
+      label,
+      url,
+      ok: res.ok,
+      status: res.status,
+      statusText: res.statusText,
+      headers: Object.fromEntries(res.headers.entries()),
+      body: text || "<empty body>",
+    };
+    console.log("PositionPilot webhook response", details);
+    return { res, text, details };
+  } catch (err) {
+    const message = formatUnknownError(err, `${label} request failed before a response was received`);
+    console.error("PositionPilot webhook network error", { label, url, error: err, message });
+    throw new Error(`${label} network error:\n${message}`);
+  }
+}
+
 function Index() {
   const [screen, setScreen] = useState<"form" | "review" | "results">("form");
   const [form, setForm] = useState<FormState>(() =>
