@@ -21,8 +21,8 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const STAGE1_URL = "https://n8n-production-0b71.up.railway.app/webhook/positionpilot-stage1";
-const STAGE2_URL = "https://n8n-production-0b71.up.railway.app/webhook/positionpilot-stage2";
+const STAGE1_URL = "https://blabber-ahead-defective.ngrok-free.dev/webhook/positionpilot-stage1";
+const STAGE2_URL = "https://blabber-ahead-defective.ngrok-free.dev/webhook/positionpilot-stage2";
 
 const FIELDS = [
   { key: "company_name", label: "Company Name", type: "input", placeholder: "Acme Inc." },
