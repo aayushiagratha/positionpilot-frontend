@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
+import jsPDF from "jspdf";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -42,6 +43,7 @@ type RecentRun = {
   generation_run_id: string;
   company_name: string;
   created_at: number;
+  input?: FormState;
   stage1: Stage1Response;
   stage2: Stage2Response | null;
 };
@@ -232,6 +234,7 @@ function Index() {
           generation_run_id: s1.generation_run_id,
           company_name: form.company_name || "Untitled",
           created_at: Date.now(),
+          input: form,
           stage1: s1,
           stage2: null,
         });
@@ -288,6 +291,7 @@ function Index() {
           generation_run_id: stage1.generation_run_id,
           company_name: form.company_name || stage1.generation_run_id,
           created_at: Date.now(),
+          input: form,
           stage1,
           stage2: s2,
         });
@@ -315,6 +319,106 @@ function Index() {
     setStage1(run.stage1);
     setStage2(run.stage2);
     setScreen(run.stage2 ? "results" : "review");
+  };
+
+  const prefillFromRun = (run: RecentRun) => {
+    if (run.input) {
+      setForm({ ...Object.fromEntries(FIELDS.map((f) => [f.key, ""])), ...run.input });
+    } else {
+      setForm((prev) => ({ ...prev, company_name: run.company_name }));
+    }
+    setScreen("form");
+    toast.success(`Loaded "${run.company_name}" into the form`);
+  };
+
+  const downloadPdf = () => {
+    if (!stage1 && !stage2) return;
+    const doc = new jsPDF({ unit: "pt", format: "letter" });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 48;
+    const maxW = pageW - margin * 2;
+    let y = margin;
+
+    const ensureSpace = (h: number) => {
+      if (y + h > pageH - margin) {
+        doc.addPage();
+        y = margin;
+      }
+    };
+    const writeWrapped = (text: string, size: number, style: "normal" | "bold" = "normal") => {
+      if (!text) return;
+      doc.setFont("helvetica", style);
+      doc.setFontSize(size);
+      const lines = doc.splitTextToSize(text, maxW) as string[];
+      const lh = size * 1.35;
+      for (const line of lines) {
+        ensureSpace(lh);
+        doc.text(line, margin, y);
+        y += lh;
+      }
+    };
+    const heading = (t: string) => { y += 8; writeWrapped(t, 16, "bold"); y += 2; };
+    const subheading = (t: string) => { y += 4; writeWrapped(t, 12, "bold"); };
+    const para = (t?: string) => { if (t) { writeWrapped(t, 11); y += 4; } };
+    const bullets = (items?: string[]) => {
+      if (!items?.length) return;
+      for (const it of items) writeWrapped("• " + it, 11);
+      y += 4;
+    };
+
+    const company = form.company_name || stage1?.generation_run_id || "PositionPilot";
+    writeWrapped(company, 22, "bold");
+    writeWrapped("Strategic Positioning Report", 12);
+    writeWrapped(new Date().toLocaleString(), 10);
+    y += 8;
+
+    heading("Positioning");
+    subheading("Positioning Statement");
+    para(stage1?.positioning_statement);
+    subheading("Differentiation Pillars");
+    bullets(stage1?.differentiation_pillars);
+
+    heading("ICP");
+    subheading("ICP Summary");
+    para(stage1?.icp_summary);
+    subheading("Buying Triggers");
+    bullets(stage1?.buying_triggers);
+
+    const m = stage2?.messaging_output;
+    heading("Messaging");
+    subheading("Hero Headline"); para(m?.hero_headline);
+    subheading("Subheadline / Value Prop"); para(m?.subheadline_value_prop);
+    subheading("Conversion Hook"); para(m?.conversion_hook);
+    subheading("Core Messaging Pillars");
+    if (m?.core_messaging_pillars?.length) {
+      for (const p of m.core_messaging_pillars) {
+        writeWrapped(p.pillar_title || "", 11, "bold");
+        para(p.supporting_copy);
+      }
+    }
+
+    const g = stage2?.gtm_output;
+    heading("GTM");
+    subheading("Primary Distribution Channels"); bullets(g?.primary_distribution_channels);
+    subheading("Growth Loops Identified"); bullets(g?.growth_loops_identified);
+    subheading("Launch Sequencing Playbook"); para(g?.launch_sequencing_playbook);
+    subheading("Initial 30-Day Milestones"); bullets(g?.initial_30_day_milestones);
+
+    const s = stage2?.seo_output;
+    heading("SEO");
+    subheading("AEO Citation Strategy"); para(s?.aeo_citation_strategy);
+    subheading("High-Intent Search Queries"); bullets(s?.high_intent_search_queries);
+    subheading("Topical Authority Clusters");
+    if (s?.topical_authority_clusters?.length) {
+      for (const c of s.topical_authority_clusters) {
+        writeWrapped(c.core_pillar || "", 11, "bold");
+        bullets(c.sub_topics);
+      }
+    }
+
+    const safe = company.replace(/[^a-z0-9-_ ]/gi, "").trim().replace(/\s+/g, "_") || "PositionPilot";
+    doc.save(`${safe}.pdf`);
   };
 
   const deleteRun = (id: string) => {
@@ -403,13 +507,13 @@ function Index() {
             <div className="mb-4 flex items-end justify-between">
               <div>
                 <h3 className="text-lg font-semibold tracking-tight">Recent Runs</h3>
-                <p className="text-xs text-muted-foreground">Reopen a previous generation.</p>
+                <p className="text-xs text-muted-foreground">Click a company to prefill the form.</p>
               </div>
             </div>
             <ul className="divide-y rounded-md border">
-              {recent.map((r) => (
+              {recent.slice(0, 5).map((r) => (
                 <li key={r.generation_run_id} className="flex items-center justify-between gap-4 px-4 py-3">
-                  <button onClick={() => openRun(r)} className="min-w-0 flex-1 text-left">
+                  <button onClick={() => prefillFromRun(r)} className="min-w-0 flex-1 text-left">
                     <div className="flex items-center gap-2">
                       <span className="truncate font-medium">{r.company_name}</span>
                       <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
@@ -421,8 +525,11 @@ function Index() {
                     </div>
                   </button>
                   <div className="flex shrink-0 items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => openRun(r)}>
-                      Open
+                    <Button variant="outline" size="sm" onClick={() => prefillFromRun(r)}>
+                      Prefill
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => openRun(r)}>
+                      View
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => deleteRun(r.generation_run_id)}>
                       Remove
@@ -535,7 +642,10 @@ function Index() {
                   Outputs from each agent. Switch tabs to explore.
                 </p>
               </div>
-              <Button variant="outline" onClick={startOver}>Start Over</Button>
+              <div className="flex shrink-0 gap-2">
+                <Button onClick={downloadPdf}>Download PDF</Button>
+                <Button variant="outline" onClick={startOver}>Start Over</Button>
+              </div>
             </div>
             <Tabs defaultValue="positioning" className="w-full">
               <TabsList className="grid w-full grid-cols-5">
