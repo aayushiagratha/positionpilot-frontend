@@ -255,6 +255,17 @@ function Index() {
     setError(null);
     setRawResponse(null);
     try {
+      // 1. Approve the run
+      const { res: approveRes, text: approveText } = await postWebhook(
+        APPROVE_URL,
+        { generation_run_id: stage1.generation_run_id },
+        "Approve",
+      );
+      if (!approveRes.ok) {
+        throw new Error(`Approve failed (${approveRes.status} ${approveRes.statusText}): ${approveText || "<empty body>"}`);
+      }
+
+      // 2. Generate full strategy
       const { res, text } = await postWebhook(
         STAGE2_URL,
         { generation_run_id: stage1.generation_run_id },
