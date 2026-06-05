@@ -22,6 +22,7 @@ export const Route = createFileRoute("/")({
 });
 
 const STAGE1_URL = "https://blabber-ahead-defective.ngrok-free.dev/webhook/positionpilot-stage1";
+const APPROVE_URL = "https://blabber-ahead-defective.ngrok-free.dev/webhook/approve-run";
 const STAGE2_URL = "https://blabber-ahead-defective.ngrok-free.dev/webhook/positionpilot-stage2";
 
 const FIELDS = [
