@@ -34,7 +34,14 @@ const FIELDS = [
   { key: "core_customer_problem", label: "Core Customer Problem", type: "textarea", placeholder: "What pain are you solving?" },
   { key: "desired_outcome", label: "Desired Outcome", type: "textarea", placeholder: "What result does the customer want?" },
   { key: "business_model", label: "Business Model", type: "input", placeholder: "SaaS, marketplace, services…" },
+  { key: "marketing_stage", label: "Marketing Stage", type: "select", placeholder: "Select funnel stage" },
   { key: "unique_differentiators", label: "Unique Differentiators", type: "textarea", placeholder: "What makes you different?" },
+] as const;
+
+const MARKETING_STAGES = [
+  "Brand Awareness (Top of Funnel)",
+  "Lead Generation (Mid Funnel)",
+  "Conversion & Sales (Bottom Funnel)",
 ] as const;
 
 type FormState = Record<string, string>;
