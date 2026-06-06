@@ -322,14 +322,35 @@ function Index() {
   };
 
   const prefillFromRun = (run: RecentRun) => {
-    if (run.input) {
-      setForm({ ...Object.fromEntries(FIELDS.map((f) => [f.key, ""])), ...run.input });
-    } else {
-      setForm((prev) => ({ ...prev, company_name: run.company_name }));
+    const blank = Object.fromEntries(FIELDS.map((f) => [f.key, ""])) as FormState;
+    const source = run.input ?? {};
+    const next: FormState = { ...blank };
+    for (const f of FIELDS) {
+      const v = (source as Record<string, unknown>)[f.key];
+      next[f.key] = typeof v === "string" ? v : v != null ? String(v) : "";
     }
+    if (!next.company_name) next.company_name = run.company_name || "";
+    setForm(next);
     setScreen("form");
     toast.success(`Loaded "${run.company_name}" into the form`);
   };
+
+  // jsPDF's default Helvetica font uses WinAnsi encoding and cannot render
+  // characters like → ←  — “ ” ’ • etc. Replace them with ASCII equivalents
+  // before drawing, otherwise glyphs render as garbage (e.g. "!'" for "→").
+  const sanitizeForPdf = (input: string): string =>
+    input
+      .replace(/\u2192/g, "->")
+      .replace(/\u2190/g, "<-")
+      .replace(/\u2194/g, "<->")
+      .replace(/\u21D2/g, "=>")
+      .replace(/[\u2013\u2014]/g, "-")
+      .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+      .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+      .replace(/\u2022/g, "*")
+      .replace(/\u00A0/g, " ")
+      .replace(/\u2026/g, "...")
+      .replace(/[^\x00-\xFF]/g, "?");
 
   const downloadPdf = () => {
     if (!stage1 && !stage2) return;
@@ -350,7 +371,7 @@ function Index() {
       if (!text) return;
       doc.setFont("helvetica", style);
       doc.setFontSize(size);
-      const lines = doc.splitTextToSize(text, maxW) as string[];
+      const lines = doc.splitTextToSize(sanitizeForPdf(text), maxW) as string[];
       const lh = size * 1.35;
       for (const line of lines) {
         ensureSpace(lh);
@@ -363,7 +384,7 @@ function Index() {
     const para = (t?: string) => { if (t) { writeWrapped(t, 11); y += 4; } };
     const bullets = (items?: string[]) => {
       if (!items?.length) return;
-      for (const it of items) writeWrapped("• " + it, 11);
+      for (const it of items) writeWrapped("* " + it, 11);
       y += 4;
     };
 
