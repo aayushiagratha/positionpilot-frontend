@@ -386,35 +386,89 @@ function Index() {
         y += lh;
       }
     };
-    const heading = (t: string) => { y += 8; writeWrapped(t, 16, "bold"); y += 2; };
-    const subheading = (t: string) => { y += 4; writeWrapped(t, 12, "bold"); };
-    const para = (t?: string) => { if (t) { writeWrapped(t, 11); y += 4; } };
+    const sectionDivider = (label: string) => {
+      doc.addPage();
+      y = margin;
+      // Accent bar
+      doc.setFillColor(15, 23, 42);
+      doc.rect(margin, y, maxW, 36, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.text(sanitizeForPdf(label.toUpperCase()), margin + 12, y + 24);
+      doc.setTextColor(0, 0, 0);
+      y += 36 + 20;
+    };
+    const subheading = (t: string) => {
+      y += 8;
+      writeWrapped(t, 13, "bold");
+      // Underline
+      ensureSpace(6);
+      doc.setDrawColor(180, 180, 180);
+      doc.line(margin, y - 2, margin + 60, y - 2);
+      y += 4;
+    };
+    const para = (t?: string) => { if (t) { writeWrapped(t, 11); y += 6; } };
     const bullets = (items?: string[]) => {
       if (!items?.length) return;
-      for (const it of items) writeWrapped("* " + it, 11);
-      y += 4;
+      for (const it of items) writeWrapped("- " + it, 11);
+      y += 6;
     };
 
     const company = form.company_name || stage1?.generation_run_id || "PositionPilot";
-    writeWrapped(company, 22, "bold");
-    writeWrapped("Strategic Positioning Report", 12);
-    writeWrapped(new Date().toLocaleString(), 10);
-    y += 8;
 
-    heading("Positioning");
+    // === COVER PAGE ===
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, pageW, pageH, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text("POSITIONPILOT", margin, margin + 20);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.text("Strategic Positioning, On Demand", margin, margin + 38);
+
+    // Company name large
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(40);
+    const companyLines = doc.splitTextToSize(sanitizeForPdf(company), maxW) as string[];
+    let cy = pageH / 2 - 60;
+    for (const line of companyLines) {
+      doc.text(line, margin, cy);
+      cy += 46;
+    }
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(20);
+    doc.text("GTM Strategy Report", margin, cy + 10);
+
+    // Footer info
+    doc.setFontSize(11);
+    const dateStr = new Date().toLocaleDateString(undefined, {
+      year: "numeric", month: "long", day: "numeric",
+    });
+    doc.text(sanitizeForPdf(dateStr), margin, pageH - margin - 40);
+    if (form.marketing_stage) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Marketing Stage:", margin, pageH - margin - 20);
+      doc.setFont("helvetica", "normal");
+      doc.text(sanitizeForPdf(form.marketing_stage), margin + 110, pageH - margin - 20);
+    }
+    doc.setTextColor(0, 0, 0);
+
+    sectionDivider("Positioning");
     subheading("Positioning Statement");
     para(stage1?.positioning_statement);
     subheading("Differentiation Pillars");
     bullets(stage1?.differentiation_pillars);
 
-    heading("ICP");
+    sectionDivider("ICP — Ideal Customer Profile");
     subheading("ICP Summary");
     para(stage1?.icp_summary);
     subheading("Buying Triggers");
     bullets(stage1?.buying_triggers);
 
     const m = stage2?.messaging_output;
-    heading("Messaging");
+    sectionDivider("Messaging");
     subheading("Hero Headline"); para(m?.hero_headline);
     subheading("Subheadline / Value Prop"); para(m?.subheadline_value_prop);
     subheading("Conversion Hook"); para(m?.conversion_hook);
@@ -427,14 +481,14 @@ function Index() {
     }
 
     const g = stage2?.gtm_output;
-    heading("GTM");
+    sectionDivider("Go-To-Market");
     subheading("Primary Distribution Channels"); bullets(g?.primary_distribution_channels);
     subheading("Growth Loops Identified"); bullets(g?.growth_loops_identified);
     subheading("Launch Sequencing Playbook"); para(g?.launch_sequencing_playbook);
     subheading("Initial 30-Day Milestones"); bullets(g?.initial_30_day_milestones);
 
     const s = stage2?.seo_output;
-    heading("SEO");
+    sectionDivider("SEO");
     subheading("AEO Citation Strategy"); para(s?.aeo_citation_strategy);
     subheading("High-Intent Search Queries"); bullets(s?.high_intent_search_queries);
     subheading("Topical Authority Clusters");
