@@ -851,3 +851,88 @@ function Step({ active, done, label }: { active: boolean; done: boolean; label: 
     </span>
   );
 }
+
+function Block({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <div className="mb-4">
+        <h3 className="text-xl font-semibold tracking-tight">{title}</h3>
+        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function NumBadge({ n }: { n: number }) {
+  return (
+    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+      {n}
+    </span>
+  );
+}
+
+function Empty() {
+  return <p className="text-sm text-muted-foreground">—</p>;
+}
+
+function NumberedList({ items }: { items?: string[] }) {
+  if (!items?.length) return <Empty />;
+  return (
+    <ol className="space-y-3">
+      {items.map((item, i) => (
+        <li key={i} className="flex gap-4 rounded-lg border bg-background p-4">
+          <NumBadge n={i + 1} />
+          <span className="min-w-0 flex-1 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+            {item}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+// Parse a free-text playbook into ordered steps. Tries common patterns:
+// "1. …", "Step 1:", "Phase 1 —", "- …", or paragraph breaks.
+function parseSteps(text?: string): string[] {
+  if (!text) return [];
+  const t = text.trim();
+  if (!t) return [];
+  const numbered = t.split(/\n?\s*(?:^|\n)\s*(?:\d+[\.\)]|Step\s+\d+[:\-\.]|Phase\s+\d+[:\-\.])\s+/i)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (numbered.length >= 2) return numbered;
+  const bulleted = t.split(/\n\s*(?:[-*•]\s+)/).map((s) => s.trim()).filter(Boolean);
+  if (bulleted.length >= 2) return bulleted;
+  const paras = t.split(/\n{2,}/).map((s) => s.trim()).filter(Boolean);
+  if (paras.length >= 2) return paras;
+  const lines = t.split(/\n+/).map((s) => s.trim()).filter(Boolean);
+  return lines.length ? lines : [t];
+}
+
+function Timeline({ text }: { text?: string }) {
+  const steps = parseSteps(text);
+  if (!steps.length) return <Empty />;
+  return (
+    <ol className="relative space-y-5 border-l-2 border-border pl-6">
+      {steps.map((s, i) => (
+        <li key={i} className="relative">
+          <span className="absolute -left-[34px] flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground ring-4 ring-background">
+            {i + 1}
+          </span>
+          <div className="rounded-lg border bg-background p-4 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+            {s}
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
