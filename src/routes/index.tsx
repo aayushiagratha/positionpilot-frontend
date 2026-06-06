@@ -735,6 +735,12 @@ function Index() {
                 <p className="mt-2 text-sm text-muted-foreground">
                   {form.company_name || "Your company"} · Outputs from each agent. Switch tabs to explore.
                 </p>
+                {form.marketing_stage && (
+                  <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
+                    Marketing Stage: {form.marketing_stage}
+                  </div>
+                )}
               </div>
               <div className="flex shrink-0 gap-2">
                 <Button onClick={downloadPdf}>Download PDF</Button>
