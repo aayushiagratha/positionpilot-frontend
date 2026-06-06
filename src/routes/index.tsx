@@ -655,12 +655,12 @@ function Index() {
         )}
 
         {screen === "results" && stage2 && (
-          <div className="space-y-6">
-            <div className="flex items-start justify-between gap-4">
+          <div className="space-y-10">
+            <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-semibold tracking-tight">Your full strategy</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Outputs from each agent. Switch tabs to explore.
+                <h2 className="text-3xl font-semibold tracking-tight">Your full strategy</h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {form.company_name || "Your company"} · Outputs from each agent. Switch tabs to explore.
                 </p>
               </div>
               <div className="flex shrink-0 gap-2">
@@ -676,72 +676,133 @@ function Index() {
                 <TabsTrigger value="gtm">GTM</TabsTrigger>
                 <TabsTrigger value="seo">SEO</TabsTrigger>
               </TabsList>
-              <TabsContent value="positioning">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Section title="Positioning Statement" body={stage1?.positioning_statement} />
-                  <Section title="Differentiation Pillars" items={stage1?.differentiation_pillars} />
-                </div>
+
+              {/* POSITIONING */}
+              <TabsContent value="positioning" className="mt-8 space-y-8">
+                <Block title="Positioning Statement" description="The single sentence that defines who you serve and how you win.">
+                  <p className="text-base leading-relaxed text-foreground whitespace-pre-wrap">
+                    {stage1?.positioning_statement || "—"}
+                  </p>
+                </Block>
+                <Block title="Differentiation Pillars" description="The proof points that make the positioning defensible.">
+                  <NumberedList items={stage1?.differentiation_pillars} />
+                </Block>
               </TabsContent>
-              <TabsContent value="icp">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Section title="ICP Summary" body={stage1?.icp_summary} />
-                  <Section title="Buying Triggers" items={stage1?.buying_triggers} />
-                </div>
+
+              {/* ICP */}
+              <TabsContent value="icp" className="mt-8 space-y-8">
+                <Block title="ICP Summary" description="Your primary target persona in one paragraph.">
+                  <p className="text-base leading-relaxed text-foreground whitespace-pre-wrap">
+                    {stage1?.icp_summary || "—"}
+                  </p>
+                </Block>
+                <Block title="Buying Triggers" description="The events that move them from passive to actively shopping.">
+                  <NumberedList items={stage1?.buying_triggers} />
+                </Block>
+                {Array.isArray((stage1 as any)?.customer_fears) && (stage1 as any).customer_fears.length > 0 && (
+                  <Block title="Customer Fears" description="What keeps them from buying — and what your messaging must disarm.">
+                    <NumberedList items={(stage1 as any).customer_fears as string[]} />
+                  </Block>
+                )}
               </TabsContent>
-              <TabsContent value="messaging">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Section title="Hero Headline" body={stage2.messaging_output?.hero_headline} />
-                  <Section title="Subheadline / Value Prop" body={stage2.messaging_output?.subheadline_value_prop} />
-                  <Section title="Conversion Hook" body={stage2.messaging_output?.conversion_hook} />
-                  <Card className="md:col-span-2">
-                    <CardHeader><CardTitle className="text-base">Core Messaging Pillars</CardTitle></CardHeader>
-                    <CardContent>
-                      {stage2.messaging_output?.core_messaging_pillars?.length ? (
-                        <ul className="space-y-4">
-                          {stage2.messaging_output.core_messaging_pillars.map((p, i) => (
-                            <li key={i}>
-                              <div className="font-semibold text-sm">{p.pillar_title}</div>
-                              <div className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">{p.supporting_copy}</div>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : <p className="text-sm text-muted-foreground">—</p>}
-                    </CardContent>
-                  </Card>
-                </div>
+
+              {/* MESSAGING */}
+              <TabsContent value="messaging" className="mt-8 space-y-10">
+                <section className="rounded-2xl border bg-card p-8 md:p-12">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    Hero Headline
+                  </div>
+                  <h3 className="mt-4 text-4xl font-bold leading-[1.1] tracking-tight md:text-5xl">
+                    {stage2.messaging_output?.hero_headline || "—"}
+                  </h3>
+                  {stage2.messaging_output?.subheadline_value_prop && (
+                    <p className="mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground">
+                      {stage2.messaging_output.subheadline_value_prop}
+                    </p>
+                  )}
+                </section>
+
+                {stage2.messaging_output?.conversion_hook && (
+                  <section className="rounded-xl border-l-4 border-primary bg-primary/5 p-6">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+                      Conversion Hook
+                    </div>
+                    <p className="mt-2 text-lg font-medium leading-relaxed text-foreground">
+                      {stage2.messaging_output.conversion_hook}
+                    </p>
+                  </section>
+                )}
+
+                <Block title="Core Messaging Pillars" description="The repeatable themes that show up across every touchpoint.">
+                  {stage2.messaging_output?.core_messaging_pillars?.length ? (
+                    <ol className="space-y-5">
+                      {stage2.messaging_output.core_messaging_pillars.map((p, i) => (
+                        <li key={i} className="flex gap-4 rounded-lg border bg-background p-5">
+                          <NumBadge n={i + 1} />
+                          <div className="min-w-0 flex-1">
+                            <div className="font-semibold">{p.pillar_title}</div>
+                            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                              {p.supporting_copy}
+                            </p>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : <Empty />}
+                </Block>
               </TabsContent>
-              <TabsContent value="gtm">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Section title="Primary Distribution Channels" items={stage2.gtm_output?.primary_distribution_channels} />
-                  <Section title="Growth Loops Identified" items={stage2.gtm_output?.growth_loops_identified} />
-                  <Section title="Launch Sequencing Playbook" body={stage2.gtm_output?.launch_sequencing_playbook} />
-                  <Section title="Initial 30-Day Milestones" items={stage2.gtm_output?.initial_30_day_milestones} />
-                </div>
+
+              {/* GTM */}
+              <TabsContent value="gtm" className="mt-8 space-y-8">
+                <Block title="Primary Distribution Channels" description="Where your earliest customers will actually find you.">
+                  <NumberedList items={stage2.gtm_output?.primary_distribution_channels} />
+                </Block>
+                <Block title="Launch Sequencing Playbook" description="Step-by-step execution order for getting to market.">
+                  <Timeline text={stage2.gtm_output?.launch_sequencing_playbook} />
+                </Block>
+                <Block title="Growth Loops Identified" description="Self-reinforcing mechanisms that compound over time.">
+                  <NumberedList items={stage2.gtm_output?.growth_loops_identified} />
+                </Block>
+                <Block title="Initial 30-Day Milestones" description="What success looks like in the first month.">
+                  <NumberedList items={stage2.gtm_output?.initial_30_day_milestones} />
+                </Block>
               </TabsContent>
-              <TabsContent value="seo">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Section title="AEO Citation Strategy" body={stage2.seo_output?.aeo_citation_strategy} />
-                  <Section title="High-Intent Search Queries" items={stage2.seo_output?.high_intent_search_queries} />
-                  <Card className="md:col-span-2">
-                    <CardHeader><CardTitle className="text-base">Topical Authority Clusters</CardTitle></CardHeader>
-                    <CardContent>
-                      {stage2.seo_output?.topical_authority_clusters?.length ? (
-                        <ul className="space-y-4">
-                          {stage2.seo_output.topical_authority_clusters.map((c, i) => (
-                            <li key={i}>
-                              <div className="font-semibold text-sm">{c.core_pillar}</div>
-                              {c.sub_topics?.length ? (
-                                <ul className="mt-1 list-disc pl-5 text-sm text-muted-foreground">
-                                  {c.sub_topics.map((s, j) => <li key={j}>{s}</li>)}
-                                </ul>
-                              ) : null}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : <p className="text-sm text-muted-foreground">—</p>}
-                    </CardContent>
-                  </Card>
-                </div>
+
+              {/* SEO */}
+              <TabsContent value="seo" className="mt-8 space-y-8">
+                <Block title="Topical Authority Clusters" description="Pillar topics and the supporting sub-topics that build authority.">
+                  {stage2.seo_output?.topical_authority_clusters?.length ? (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {stage2.seo_output.topical_authority_clusters.map((c, i) => (
+                        <Card key={i} className="overflow-hidden">
+                          <CardHeader className="bg-muted/40">
+                            <CardTitle className="text-base">{c.core_pillar}</CardTitle>
+                          </CardHeader>
+                          <CardContent className="pt-5">
+                            {c.sub_topics?.length ? (
+                              <ul className="space-y-2 text-sm text-foreground">
+                                {c.sub_topics.map((s, j) => (
+                                  <li key={j} className="flex gap-2 leading-relaxed">
+                                    <span className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                                    <span>{s}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : <Empty />}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : <Empty />}
+                </Block>
+                <Block title="High-Intent Search Queries" description="Bottom-of-funnel terms worth chasing first.">
+                  <NumberedList items={stage2.seo_output?.high_intent_search_queries} />
+                </Block>
+                <Block title="AEO Citation Strategy" description="How to get cited by LLMs and answer engines.">
+                  <p className="text-base leading-relaxed text-foreground whitespace-pre-wrap">
+                    {stage2.seo_output?.aeo_citation_strategy || "—"}
+                  </p>
+                </Block>
               </TabsContent>
             </Tabs>
           </div>
