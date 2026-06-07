@@ -302,13 +302,18 @@ function Index() {
       }
 
       // 2. Generate full strategy
+      const stage2Body = {
+        generation_run_id: runId,
+        company_name: form.company_name,
+        marketing_stage: form.marketing_stage,
+      };
+      console.log("PositionPilot Stage 2 request", {
+        url: STAGE2_URL,
+        body: stage2Body,
+      });
       const { res, text } = await postWebhook(
         STAGE2_URL,
-        {
-          generation_run_id: runId,
-          company_name: form.company_name,
-          marketing_stage: form.marketing_stage,
-        },
+        stage2Body,
         "Stage 2",
       );
       setRawResponse(text);
