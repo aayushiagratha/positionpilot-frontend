@@ -878,8 +878,22 @@ function Index() {
                     </div>
                   ) : <Empty />}
                 </Block>
-                <Block title="High-Intent Search Queries" description="Bottom-of-funnel terms worth chasing first.">
+                <Block
+                  title="High-Intent Search Queries"
+                  description={
+                    form.marketing_stage === "Brand Awareness (Top of Funnel)"
+                      ? "Top-of-funnel terms to build awareness and reach new audiences."
+                      : form.marketing_stage === "Lead Generation (Mid Funnel)"
+                        ? "Mid-funnel terms to capture solution-aware prospects."
+                        : form.marketing_stage === "Conversion & Sales (Bottom Funnel)"
+                          ? "Bottom-of-funnel terms to capture high-intent buyers."
+                          : "Search queries worth prioritizing."
+                  }
+                >
                   <NumberedList items={stage2.seo_output?.high_intent_search_queries} />
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Search volumes not verified. Cross-check using Google Keyword Planner or Ahrefs before prioritizing.
+                  </p>
                 </Block>
                 <Block title="AEO Citation Strategy" description="How to get cited by LLMs and answer engines.">
                   <p className="text-base leading-relaxed text-foreground whitespace-pre-wrap">
