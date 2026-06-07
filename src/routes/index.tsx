@@ -24,7 +24,7 @@ export const Route = createFileRoute("/")({
 
 const STAGE1_URL = "https://blabber-ahead-defective.ngrok-free.dev/webhook/positionpilot-stage1";
 const APPROVE_URL = "https://blabber-ahead-defective.ngrok-free.dev/webhook/approve-run";
-const STAGE2_URL = "https://blabber-ahead-defective.ngrok-free.dev/webhook/positionpilot-stage2";
+const STAGE2_URL = "https://blabber-ahead-defective.ngrok-free.app/webhook/positionpilot-stage2";
 
 const FIELDS = [
   { key: "company_name", label: "Company Name", type: "input", placeholder: "Acme Inc." },
@@ -278,7 +278,11 @@ function Index() {
       // 2. Generate full strategy
       const { res, text } = await postWebhook(
         STAGE2_URL,
-        { generation_run_id: stage1.generation_run_id },
+        {
+          generation_run_id: stage1.generation_run_id,
+          company_name: form.company_name,
+          marketing_stage: form.marketing_stage,
+        },
         "Stage 2",
       );
       setRawResponse(text);
