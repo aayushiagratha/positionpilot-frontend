@@ -285,6 +285,8 @@ function Index() {
       toast.error("Missing generation_run_id from stage 1 response");
       return;
     }
+    const runId = stage1.generation_run_id;
+    console.log("PositionPilot Approve+Stage2 using generation_run_id", { runId });
     setLoading(true);
     setError(null);
     setRawResponse(null);
@@ -292,7 +294,7 @@ function Index() {
       // 1. Approve the run
       const { res: approveRes, text: approveText } = await postWebhook(
         APPROVE_URL,
-        { generation_run_id: stage1.generation_run_id },
+        { generation_run_id: runId },
         "Approve",
       );
       if (!approveRes.ok) {
@@ -303,7 +305,7 @@ function Index() {
       const { res, text } = await postWebhook(
         STAGE2_URL,
         {
-          generation_run_id: stage1.generation_run_id,
+          generation_run_id: runId,
           company_name: form.company_name,
           marketing_stage: form.marketing_stage,
         },
