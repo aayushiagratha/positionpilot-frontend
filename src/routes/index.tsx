@@ -131,9 +131,33 @@ function toStringArray(v: unknown): string[] {
 function normalizeStage1(raw: unknown): Stage1Response {
   const data = (Array.isArray(raw) ? raw[0] : raw) as any;
   if (!data) return {};
+  // Preserve the EXACT generation_run_id returned by Stage 1 — do NOT coerce
+  // numbers via String() (loses precision on large ints) and check common key
+  // variants in case the webhook nests or renames it.
+  const rawId =
+    data.generation_run_id ??
+    data.generationRunId ??
+    data.run_id ??
+    data.runId ??
+    data.id ??
+    data.positioning_output?.generation_run_id ??
+    data.icp_output?.generation_run_id;
+  const generation_run_id =
+    typeof rawId === "string"
+      ? rawId
+      : rawId != null
+        ? String(rawId)
+        : undefined;
+  if (generation_run_id) {
+    console.log("PositionPilot Stage 1 generation_run_id captured", {
+      generation_run_id,
+      type: typeof rawId,
+    });
+  } else {
+    console.warn("PositionPilot Stage 1 response missing generation_run_id", data);
+  }
   return {
-    generation_run_id:
-      data.generation_run_id != null ? String(data.generation_run_id) : undefined,
+    generation_run_id,
     positioning_statement: data.positioning_output?.positioning_statement,
     icp_summary: data.icp_output?.primary_target_persona,
     differentiation_pillars: data.positioning_output?.differentiation_pillars || [],
