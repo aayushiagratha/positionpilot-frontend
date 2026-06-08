@@ -1120,16 +1120,29 @@ function Landing({ onStart }: { onStart: () => void }) {
               Three steps to a real strategy
             </h2>
           </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {steps.map((s) => (
-              <div key={s.n} className="rounded-xl border bg-card p-6">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold">
-                  {s.n}
+          <div className="relative mt-12">
+            {/* Connecting dotted line (desktop only) */}
+            <div
+              aria-hidden
+              className="hidden md:block absolute left-[16.66%] right-[16.66%] top-[2.25rem] border-t-2 border-dashed border-border"
+            />
+            <div className="relative grid gap-6 md:grid-cols-3">
+              {steps.map((s, i) => (
+                <div key={s.n} className="relative rounded-xl border bg-card p-6">
+                  <div className="relative z-10 mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold ring-8 ring-card">
+                    {s.n}
+                  </div>
+                  <h3 className="mt-5 text-lg font-semibold text-center">{s.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-center">{s.body}</p>
+                  {i < steps.length - 1 && (
+                    <div
+                      aria-hidden
+                      className="md:hidden mx-auto mt-4 h-6 w-px border-l-2 border-dashed border-border"
+                    />
+                  )}
                 </div>
-                <h3 className="mt-5 text-lg font-semibold">{s.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
           <div className="mt-10 flex justify-center">
             <Button size="lg" onClick={onStart}>Start for free</Button>
