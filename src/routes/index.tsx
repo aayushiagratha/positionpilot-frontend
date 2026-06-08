@@ -1065,7 +1065,19 @@ function Landing({ onStart }: { onStart: () => void }) {
   return (
     <div>
       {/* HERO */}
-      <section className="mx-auto max-w-5xl px-6 pt-16 pb-20 md:pt-24 md:pb-28 text-center">
+      <section className="relative overflow-hidden">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 opacity-70"
+          style={{
+            background:
+              "linear-gradient(120deg, hsl(var(--primary) / 0.10), transparent 35%, hsl(var(--primary) / 0.08) 65%, transparent), radial-gradient(60% 50% at 50% 0%, hsl(var(--primary) / 0.12), transparent 70%)",
+            backgroundSize: "200% 200%, 100% 100%",
+            animation: "pp-hero-gradient 18s ease-in-out infinite",
+          }}
+        />
+        <style>{`@keyframes pp-hero-gradient { 0%{background-position:0% 50%, 50% 0%} 50%{background-position:100% 50%, 50% 0%} 100%{background-position:0% 50%, 50% 0%} }`}</style>
+      <div className="mx-auto max-w-5xl px-6 pt-16 pb-20 md:pt-24 md:pb-28 text-center">
         <div className="inline-flex items-center gap-2 rounded-full border bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
           AI GTM Strategy Engine · Beta
@@ -1086,9 +1098,15 @@ function Landing({ onStart }: { onStart: () => void }) {
             See a sample output →
           </button>
         </div>
-        <p className="mt-5 text-xs text-muted-foreground">
-          Tested on Antimattr, Fathom, Alphatech, Granola
-        </p>
+        <div className="mt-8">
+          <p className="text-sm md:text-base font-medium text-foreground">
+            Tested on Antimattr · Fathom · Alphatech · Granola
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Antimattr (AI Hardware) · Fathom (SaaS) · Alphatech (B2B Electronics) · Granola (Productivity)
+          </p>
+        </div>
+      </div>
       </section>
 
       {/* HOW IT WORKS */}
