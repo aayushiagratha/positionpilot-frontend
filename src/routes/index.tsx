@@ -13,10 +13,13 @@ import jsPDF from "jspdf";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PositionPilot — Strategic Positioning Generator" },
-      { name: "description", content: "Generate a complete positioning, ICP, messaging, GTM and SEO strategy in minutes." },
-      { property: "og:title", content: "PositionPilot" },
-      { property: "og:description", content: "Generate a complete positioning, ICP, messaging, GTM and SEO strategy in minutes." },
+      { title: "PositionPilot — AI GTM Strategy Engine" },
+      { name: "description", content: "Your complete GTM strategy in 3 minutes. AI-powered positioning, ICP, messaging, GTM and SEO — built specifically for your company." },
+      { property: "og:title", content: "PositionPilot — AI GTM Strategy Engine" },
+      { property: "og:description", content: "Your complete GTM strategy in 3 minutes. AI-powered positioning, ICP, messaging, GTM and SEO — built specifically for your company." },
+    ],
+    links: [
+      { rel: "icon", href: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230f172a'/%3E%3Ctext x='50%25' y='55%25' font-family='Helvetica,Arial,sans-serif' font-size='18' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3EP%3C/text%3E%3C/svg%3E" },
     ],
   }),
   component: Index,
@@ -27,15 +30,15 @@ const APPROVE_URL = "https://blabber-ahead-defective.ngrok-free.dev/webhook/appr
 const STAGE2_URL = "https://blabber-ahead-defective.ngrok-free.dev/webhook/positionpilot-stage2";
 
 const FIELDS = [
-  { key: "company_name", label: "Company Name", type: "input", placeholder: "Acme Inc." },
-  { key: "product_description", label: "Product Description", type: "textarea", placeholder: "What does your product do?" },
-  { key: "target_audience", label: "Target Audience", type: "textarea", placeholder: "Who is it for?" },
-  { key: "primary_competitors", label: "Primary Competitors", type: "textarea", placeholder: "Who else solves this?" },
-  { key: "core_customer_problem", label: "Core Customer Problem", type: "textarea", placeholder: "What pain are you solving?" },
-  { key: "desired_outcome", label: "Desired Outcome", type: "textarea", placeholder: "What result does the customer want?" },
-  { key: "business_model", label: "Business Model", type: "input", placeholder: "SaaS, marketplace, services…" },
-  { key: "marketing_stage", label: "Marketing Stage", type: "select", placeholder: "Select funnel stage" },
-  { key: "unique_differentiators", label: "Unique Differentiators", type: "textarea", placeholder: "What makes you different?" },
+  { key: "company_name", label: "Company Name", type: "input", placeholder: "e.g. Fathom", helper: "The legal or brand name customers will see." },
+  { key: "product_description", label: "Product Description", type: "textarea", placeholder: "e.g. Free AI meeting assistant that records, transcribes and summarizes Zoom, Google Meet and Teams calls.", helper: "One or two sentences. What does your product actually do?" },
+  { key: "target_audience", label: "Target Audience", type: "textarea", placeholder: "e.g. Sales and customer-success teams at B2B SaaS companies (10–500 employees) running 10+ external meetings per week.", helper: "Who specifically uses it? Roles, company size, industry." },
+  { key: "primary_competitors", label: "Primary Competitors", type: "textarea", placeholder: "e.g. Otter.ai, Fireflies.ai, Gong, Chorus", helper: "Top 2–4 alternatives a buyer would compare you to." },
+  { key: "core_customer_problem", label: "Core Customer Problem", type: "textarea", placeholder: "e.g. Reps lose critical commitments and follow-ups because manual note-taking distracts from the conversation.", helper: "The painful, expensive problem you eliminate." },
+  { key: "desired_outcome", label: "Desired Outcome", type: "textarea", placeholder: "e.g. Every meeting is captured, summarized and searchable so deals move faster and nothing gets dropped.", helper: "What does success look like AFTER they use you?" },
+  { key: "business_model", label: "Business Model", type: "input", placeholder: "e.g. Freemium SaaS, seat-based pricing", helper: "How you make money: SaaS, marketplace, services, etc." },
+  { key: "marketing_stage", label: "Marketing Stage", type: "select", placeholder: "Select funnel stage", helper: "Where this strategy will focus the most." },
+  { key: "unique_differentiators", label: "What makes you different from competitors?", type: "textarea", placeholder: "e.g. Free unlimited recording, native CRM sync, works across Zoom + Meet + Teams without extensions.", helper: "The 2–3 things only you can credibly claim." },
 ] as const;
 
 const MARKETING_STAGES = [
