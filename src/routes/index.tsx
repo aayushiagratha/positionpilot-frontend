@@ -1215,12 +1215,11 @@ function Landing({ onStart }: { onStart: () => void }) {
                 <li className="flex gap-2"><span className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />A competitor gains an edge by leveraging meeting insights that the team lacks</li>
               </ul>
             </div>
-            {/* Blur overlay */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-card via-card/90 to-transparent" />
-            <div className="absolute inset-x-0 bottom-6 flex justify-center">
-              <Button onClick={onStart}>Generate your strategy to see the full output</Button>
-            </div>
-            <div className="h-16" />
+            {/* Subtle bottom fade hint (does not cover content) */}
+            <div className="pointer-events-none mt-8 h-16 -mx-8 md:-mx-10 -mb-8 md:-mb-10 bg-gradient-to-t from-card to-transparent" />
+          </div>
+          <div className="mt-6 flex justify-center">
+            <Button onClick={onStart}>Generate your strategy to see the full output</Button>
           </div>
         </div>
       </section>
