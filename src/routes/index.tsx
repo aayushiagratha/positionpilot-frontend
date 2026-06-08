@@ -569,8 +569,9 @@ function Index() {
         <div className="mx-auto max-w-5xl px-6 py-5 flex items-center justify-between">
           <button onClick={startOver} className="text-left">
             <h1 className="text-4xl font-bold tracking-tight">PositionPilot</h1>
-            <p className="text-xs text-muted-foreground">Strategic positioning, on demand</p>
+            <p className="text-xs text-muted-foreground">AI GTM Strategy Engine</p>
           </button>
+          {screen !== "landing" && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Step active={screen === "form"} done={screen !== "form"} label="1. Input" />
             <span>→</span>
@@ -578,10 +579,13 @@ function Index() {
             <span>→</span>
             <Step active={screen === "results"} done={false} label="3. Strategy" />
           </div>
+          )}
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-6 py-10">
+      <main className={screen === "landing" ? "" : "mx-auto max-w-5xl px-6 py-10"}>
+        {screen === "landing" && <Landing onStart={() => setScreen("form")} />}
+
         {error && (
           <div className="mb-6 rounded-md border border-destructive/50 bg-destructive/10 p-4" role="alert">
             <div className="text-sm font-semibold text-destructive">API request failed</div>
