@@ -215,13 +215,14 @@ async function postWebhook(url: string, payload: unknown, label: string, timeout
 }
 
 function Index() {
-  const [screen, setScreen] = useState<"form" | "review" | "results">("form");
+  const [screen, setScreen] = useState<"landing" | "form" | "review" | "results">("landing");
   const [form, setForm] = useState<FormState>(() =>
     Object.fromEntries(FIELDS.map((f) => [f.key, ""])),
   );
   const [loading, setLoading] = useState(false);
   const [stage1, setStage1] = useState<Stage1Response | null>(null);
   const [stage2, setStage2] = useState<Stage2Response | null>(null);
+  const [completedAt, setCompletedAt] = useState<number | null>(null);
   const [recent, setRecent] = useState<RecentRun[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [rawResponse, setRawResponse] = useState<string | null>(null);
@@ -331,6 +332,7 @@ function Index() {
       }
       const s2 = normalizeStage2(data);
       setStage2(s2);
+      setCompletedAt(Date.now());
       if (stage1?.generation_run_id) {
         upsertRecent({
           generation_run_id: stage1.generation_run_id,
@@ -357,6 +359,17 @@ function Index() {
     setStage2(null);
     setError(null);
     setRawResponse(null);
+    setCompletedAt(null);
+    setScreen("landing");
+  };
+
+  const runAnother = () => {
+    setStage1(null);
+    setStage2(null);
+    setError(null);
+    setRawResponse(null);
+    setCompletedAt(null);
+    setForm(Object.fromEntries(FIELDS.map((f) => [f.key, ""])));
     setScreen("form");
   };
 
