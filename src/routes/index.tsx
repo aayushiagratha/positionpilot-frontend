@@ -603,15 +603,21 @@ function Index() {
         {screen === "form" && (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <h2 className="text-2xl font-semibold tracking-tight">Tell us about your business</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                We'll use this to draft your positioning foundation.
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                Step 1 of 3 — Tell us about your company
+              </div>
+              <h2 className="mt-2 text-3xl font-semibold tracking-tight">Tell us about your business</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Fill in 8 fields. We'll draft your positioning foundation before generating the full strategy.
               </p>
             </div>
             <div className="grid gap-5 md:grid-cols-2">
               {FIELDS.map((f) => (
                 <div key={f.key} className={f.type === "textarea" ? "md:col-span-2" : ""}>
                   <Label htmlFor={f.key} className="mb-2 block">{f.label}</Label>
+                  {(f as any).helper && (
+                    <p className="mb-2 text-xs text-muted-foreground">{(f as any).helper}</p>
+                  )}
                   {f.type === "textarea" ? (
                     <Textarea
                       id={f.key}
