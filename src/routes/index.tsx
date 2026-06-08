@@ -766,8 +766,13 @@ function Index() {
         {screen === "review" && !loading && !error && stage1 && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-semibold tracking-tight">Review your foundation</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                Step 2 of 3 — Review your foundation
+              </div>
+              <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+                {form.company_name || "Your company"} — Foundation Review
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
                 Approve to generate the full strategy across all agents.
               </p>
             </div>
@@ -792,9 +797,17 @@ function Index() {
           <div className="space-y-10">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <h2 className="text-3xl font-semibold tracking-tight">Your full strategy</h2>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  Step 3 of 3 — Your strategy is ready
+                </div>
+                <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+                  {form.company_name || "Your company"} — GTM Strategy
+                </h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  {form.company_name || "Your company"} · Outputs from each agent. Switch tabs to explore.
+                  Outputs from each agent. Switch tabs to explore.
+                  {completedAt && (
+                    <span> · Generated {new Date(completedAt).toLocaleString()}</span>
+                  )}
                 </p>
                 {form.marketing_stage && (
                   <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
@@ -805,6 +818,7 @@ function Index() {
               </div>
               <div className="flex shrink-0 gap-2">
                 <Button onClick={downloadPdf}>Download PDF</Button>
+                <Button variant="outline" onClick={runAnother}>Run for another company</Button>
                 <Button variant="outline" onClick={startOver}>Start Over</Button>
               </div>
             </div>
