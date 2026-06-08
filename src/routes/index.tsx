@@ -565,21 +565,25 @@ function Index() {
   return (
     <div className="min-h-screen bg-background">
       <Toaster />
-      <header className="border-b">
-        <div className="mx-auto max-w-5xl px-6 py-5 flex items-center justify-between">
-          <button onClick={startOver} className="text-left">
-            <h1 className="text-4xl font-bold tracking-tight">PositionPilot</h1>
-            <p className="text-xs text-muted-foreground">AI GTM Strategy Engine</p>
+      <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+        <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-between">
+          <button
+            onClick={() => setScreen("landing")}
+            className="text-left flex items-center gap-2"
+            aria-label="PositionPilot home"
+          >
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-foreground text-background text-xs font-bold">
+              P
+            </span>
+            <span className="text-base font-semibold tracking-tight">PositionPilot</span>
           </button>
-          {screen !== "landing" && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Step active={screen === "form"} done={screen !== "form"} label="1. Input" />
-            <span>→</span>
-            <Step active={screen === "review"} done={screen === "results"} label="2. Review" />
-            <span>→</span>
-            <Step active={screen === "results"} done={false} label="3. Strategy" />
-          </div>
-          )}
+          <Button
+            size="sm"
+            onClick={() => setScreen("form")}
+            variant={screen === "form" ? "outline" : "default"}
+          >
+            Generate Strategy
+          </Button>
         </div>
       </header>
 
@@ -992,7 +996,7 @@ function Footer() {
         <div className="text-muted-foreground">
           Built by{" "}
           <a
-            href="https://www.linkedin.com/"
+            href="https://www.linkedin.com/in/aayushiagratha"
             target="_blank"
             rel="noreferrer"
             className="underline underline-offset-4 hover:text-foreground"
@@ -1061,7 +1065,19 @@ function Landing({ onStart }: { onStart: () => void }) {
   return (
     <div>
       {/* HERO */}
-      <section className="mx-auto max-w-5xl px-6 pt-16 pb-20 md:pt-24 md:pb-28 text-center">
+      <section className="relative overflow-hidden">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10"
+          style={{
+            background:
+              "linear-gradient(120deg, rgba(99,102,241,0.10), rgba(236,72,153,0.06) 35%, rgba(14,165,233,0.08) 65%, rgba(168,85,247,0.10)), radial-gradient(60% 50% at 50% 0%, rgba(99,102,241,0.12), transparent 70%)",
+            backgroundSize: "200% 200%, 100% 100%",
+            animation: "pp-hero-gradient 18s ease-in-out infinite",
+          }}
+        />
+        <style>{`@keyframes pp-hero-gradient { 0%{background-position:0% 50%, 50% 0%} 50%{background-position:100% 50%, 50% 0%} 100%{background-position:0% 50%, 50% 0%} }`}</style>
+      <div className="mx-auto max-w-5xl px-6 pt-16 pb-20 md:pt-24 md:pb-28 text-center">
         <div className="inline-flex items-center gap-2 rounded-full border bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
           AI GTM Strategy Engine · Beta
@@ -1082,9 +1098,15 @@ function Landing({ onStart }: { onStart: () => void }) {
             See a sample output →
           </button>
         </div>
-        <p className="mt-5 text-xs text-muted-foreground">
-          Tested on Antimattr, Fathom, Alphatech, Granola
-        </p>
+        <div className="mt-8">
+          <p className="text-sm md:text-base font-medium text-foreground">
+            Tested on Antimattr · Fathom · Alphatech · Granola
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Antimattr (AI Hardware) · Fathom (SaaS) · Alphatech (B2B Electronics) · Granola (Productivity)
+          </p>
+        </div>
+      </div>
       </section>
 
       {/* HOW IT WORKS */}
@@ -1098,16 +1120,29 @@ function Landing({ onStart }: { onStart: () => void }) {
               Three steps to a real strategy
             </h2>
           </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {steps.map((s) => (
-              <div key={s.n} className="rounded-xl border bg-card p-6">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold">
-                  {s.n}
+          <div className="relative mt-12">
+            {/* Connecting dotted line (desktop only) */}
+            <div
+              aria-hidden
+              className="hidden md:block absolute left-[16.66%] right-[16.66%] top-[2.25rem] border-t-2 border-dashed border-border"
+            />
+            <div className="relative grid gap-6 md:grid-cols-3">
+              {steps.map((s, i) => (
+                <div key={s.n} className="relative rounded-xl border bg-card p-6">
+                  <div className="relative z-10 mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold ring-8 ring-card">
+                    {s.n}
+                  </div>
+                  <h3 className="mt-5 text-lg font-semibold text-center">{s.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-center">{s.body}</p>
+                  {i < steps.length - 1 && (
+                    <div
+                      aria-hidden
+                      className="md:hidden mx-auto mt-4 h-6 w-px border-l-2 border-dashed border-border"
+                    />
+                  )}
                 </div>
-                <h3 className="mt-5 text-lg font-semibold">{s.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
           <div className="mt-10 flex justify-center">
             <Button size="lg" onClick={onStart}>Start for free</Button>
@@ -1180,12 +1215,11 @@ function Landing({ onStart }: { onStart: () => void }) {
                 <li className="flex gap-2"><span className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />A competitor gains an edge by leveraging meeting insights that the team lacks</li>
               </ul>
             </div>
-            {/* Blur overlay */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-card via-card/90 to-transparent" />
-            <div className="absolute inset-x-0 bottom-6 flex justify-center">
-              <Button onClick={onStart}>Generate your strategy to see the full output</Button>
-            </div>
-            <div className="h-16" />
+            {/* Subtle bottom fade hint (does not cover content) */}
+            <div className="pointer-events-none mt-8 h-16 -mx-8 md:-mx-10 -mb-8 md:-mb-10 bg-gradient-to-t from-card to-transparent" />
+          </div>
+          <div className="mt-6 flex justify-center">
+            <Button onClick={onStart}>Generate your strategy to see the full output</Button>
           </div>
         </div>
       </section>
