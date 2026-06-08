@@ -1068,10 +1068,10 @@ function Landing({ onStart }: { onStart: () => void }) {
       <section className="relative overflow-hidden">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10 opacity-70"
+          className="pointer-events-none absolute inset-0 -z-10"
           style={{
             background:
-              "linear-gradient(120deg, hsl(var(--primary) / 0.10), transparent 35%, hsl(var(--primary) / 0.08) 65%, transparent), radial-gradient(60% 50% at 50% 0%, hsl(var(--primary) / 0.12), transparent 70%)",
+              "linear-gradient(120deg, rgba(99,102,241,0.10), rgba(236,72,153,0.06) 35%, rgba(14,165,233,0.08) 65%, rgba(168,85,247,0.10)), radial-gradient(60% 50% at 50% 0%, rgba(99,102,241,0.12), transparent 70%)",
             backgroundSize: "200% 200%, 100% 100%",
             animation: "pp-hero-gradient 18s ease-in-out infinite",
           }}
