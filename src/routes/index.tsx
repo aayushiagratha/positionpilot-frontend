@@ -976,6 +976,251 @@ function Index() {
           </div>
         )}
       </main>
+      <Footer />
+    </div>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="mt-20 border-t bg-muted/30">
+      <div className="mx-auto max-w-5xl px-6 py-10 grid gap-6 md:grid-cols-3 text-sm">
+        <div>
+          <div className="font-semibold">PositionPilot</div>
+          <p className="mt-1 text-muted-foreground">AI GTM Strategy Engine</p>
+        </div>
+        <div className="text-muted-foreground">
+          Built by{" "}
+          <a
+            href="https://www.linkedin.com/"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-4 hover:text-foreground"
+          >
+            Aayushi Agratha
+          </a>
+          <div className="mt-1 text-xs">Powered by n8n · OpenRouter · DeepSeek</div>
+        </div>
+        <div className="md:text-right">
+          <a
+            href="https://github.com/aayushiagratha/positionpilot"
+            target="_blank"
+            rel="noreferrer"
+            className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
+            GitHub
+          </a>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+function Landing({ onStart }: { onStart: () => void }) {
+  const [email, setEmail] = useState("");
+  const [joined, setJoined] = useState(false);
+
+  const scrollToSample = () => {
+    document.getElementById("sample")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const submitEmail = (e: React.FormEvent) => {
+    e.preventDefault();
+    const v = email.trim();
+    if (!v || !v.includes("@")) {
+      toast.error("Please enter a valid email");
+      return;
+    }
+    try {
+      const raw = window.localStorage.getItem("positionpilot:waitlist");
+      const list: string[] = raw ? JSON.parse(raw) : [];
+      if (!list.includes(v)) list.push(v);
+      window.localStorage.setItem("positionpilot:waitlist", JSON.stringify(list));
+    } catch {
+      /* ignore */
+    }
+    setJoined(true);
+    setEmail("");
+    toast.success("You're on the waitlist");
+  };
+
+  const outputs = [
+    { title: "Positioning", body: "Category definition, positioning statement, and differentiation pillars." },
+    { title: "ICP", body: "Target persona, buying triggers, economic buyer profile, and customer fears." },
+    { title: "Messaging", body: "Hero headline, value proposition, and core messaging pillars." },
+    { title: "GTM Strategy", body: "Distribution channels, launch sequencing playbook, and growth loops." },
+    { title: "SEO / AEO", body: "Topical authority clusters, high-intent search queries, and AEO citation strategy." },
+  ];
+
+  const steps = [
+    { n: 1, title: "Tell us about your company", body: "Fill in 8 fields about your product, audience, and competitors." },
+    { n: 2, title: "Review your foundation", body: "Our AI builds your positioning and ICP. You approve before we continue." },
+    { n: 3, title: "Get your full strategy", body: "5 specialized agents generate your complete GTM strategy in under 3 minutes." },
+  ];
+
+  return (
+    <div>
+      {/* HERO */}
+      <section className="mx-auto max-w-5xl px-6 pt-16 pb-20 md:pt-24 md:pb-28 text-center">
+        <div className="inline-flex items-center gap-2 rounded-full border bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
+          AI GTM Strategy Engine · Beta
+        </div>
+        <h1 className="mt-6 text-4xl font-bold tracking-tight md:text-6xl leading-[1.05]">
+          Your complete GTM strategy<br className="hidden md:block" /> in 3 minutes
+        </h1>
+        <p className="mx-auto mt-6 max-w-2xl text-base md:text-lg text-muted-foreground leading-relaxed">
+          AI-powered positioning, ICP, messaging, GTM, and SEO — built specifically for your company.
+          Not templates. Not generic AI. A real strategy engine.
+        </p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Button size="lg" onClick={onStart}>Generate My Strategy</Button>
+          <button
+            onClick={scrollToSample}
+            className="text-sm font-medium underline underline-offset-4 hover:text-foreground text-muted-foreground"
+          >
+            See a sample output →
+          </button>
+        </div>
+        <p className="mt-5 text-xs text-muted-foreground">
+          Tested on Antimattr, Fathom, Alphatech, Granola
+        </p>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section className="border-t bg-muted/20">
+        <div className="mx-auto max-w-5xl px-6 py-20">
+          <div className="text-center">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              How it works
+            </div>
+            <h2 className="mt-3 text-3xl md:text-4xl font-semibold tracking-tight">
+              Three steps to a real strategy
+            </h2>
+          </div>
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {steps.map((s) => (
+              <div key={s.n} className="rounded-xl border bg-card p-6">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold">
+                  {s.n}
+                </div>
+                <h3 className="mt-5 text-lg font-semibold">{s.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-10 flex justify-center">
+            <Button size="lg" onClick={onStart}>Start for free</Button>
+          </div>
+        </div>
+      </section>
+
+      {/* WHAT YOU GET */}
+      <section className="border-t">
+        <div className="mx-auto max-w-5xl px-6 py-20">
+          <div className="text-center">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              What you get
+            </div>
+            <h2 className="mt-3 text-3xl md:text-4xl font-semibold tracking-tight">
+              5 outputs. One strategy engine.
+            </h2>
+          </div>
+          <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {outputs.map((o, i) => (
+              <div key={o.title} className="rounded-xl border bg-card p-6">
+                <div className="flex h-9 w-9 items-center justify-center rounded-md bg-foreground text-background text-sm font-semibold">
+                  {i + 1}
+                </div>
+                <h3 className="mt-4 text-lg font-semibold">{o.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{o.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SAMPLE */}
+      <section id="sample" className="border-t bg-muted/20">
+        <div className="mx-auto max-w-4xl px-6 py-20">
+          <div className="text-center">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Sample output
+            </div>
+            <h2 className="mt-3 text-3xl md:text-4xl font-semibold tracking-tight">
+              Real output. Real companies.
+            </h2>
+          </div>
+          <div className="relative mt-10 overflow-hidden rounded-2xl border bg-card p-8 md:p-10">
+            <div className="flex items-center gap-3">
+              <span className="rounded bg-foreground px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-background">
+                Company
+              </span>
+              <span className="text-lg font-semibold">Fathom</span>
+            </div>
+            <div className="mt-6">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                Positioning Statement
+              </div>
+              <p className="mt-3 text-base md:text-lg leading-relaxed text-foreground">
+                "For sales and customer-facing teams who lose critical information from meetings because
+                manual note-taking distracts from the conversation, Fathom is the free AI meeting
+                intelligence platform that automatically records, transcribes, and summarizes calls from
+                Zoom, Google Meet, and Microsoft Teams — unlike Otter.ai or Fireflies.ai which charge for
+                full features and require complex setup."
+              </p>
+            </div>
+            <div className="mt-8">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                Buying Triggers
+              </div>
+              <ul className="mt-3 space-y-2 text-sm leading-relaxed text-foreground">
+                <li className="flex gap-2"><span className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />A team member misses a key customer commitment mentioned in a meeting</li>
+                <li className="flex gap-2"><span className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />Monthly recurring revenue targets are missed due to poorly tracked call follow-ups</li>
+                <li className="flex gap-2"><span className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />A competitor gains an edge by leveraging meeting insights that the team lacks</li>
+              </ul>
+            </div>
+            {/* Blur overlay */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-card via-card/90 to-transparent" />
+            <div className="absolute inset-x-0 bottom-6 flex justify-center">
+              <Button onClick={onStart}>Generate your strategy to see the full output</Button>
+            </div>
+            <div className="h-16" />
+          </div>
+        </div>
+      </section>
+
+      {/* EMAIL CAPTURE */}
+      <section className="border-t">
+        <div className="mx-auto max-w-2xl px-6 py-20 text-center">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Waitlist
+          </div>
+          <h2 className="mt-3 text-3xl md:text-4xl font-semibold tracking-tight">Get early access</h2>
+          <p className="mt-4 text-sm md:text-base text-muted-foreground leading-relaxed">
+            PositionPilot is currently in beta. Enter your email to join the waitlist and get notified when we launch.
+          </p>
+          {joined ? (
+            <p className="mt-6 text-sm font-medium text-foreground">
+              Thanks — you're on the list. We'll be in touch.
+            </p>
+          ) : (
+            <form onSubmit={submitEmail} className="mt-6 flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
+              <Input
+                type="email"
+                placeholder="you@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <Button type="submit">Join Waitlist</Button>
+            </form>
+          )}
+          <p className="mt-3 text-xs text-muted-foreground">
+            No spam. Just your GTM strategy when it's ready.
+          </p>
+        </div>
+      </section>
     </div>
   );
 }
