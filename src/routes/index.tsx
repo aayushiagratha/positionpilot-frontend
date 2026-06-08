@@ -565,21 +565,25 @@ function Index() {
   return (
     <div className="min-h-screen bg-background">
       <Toaster />
-      <header className="border-b">
-        <div className="mx-auto max-w-5xl px-6 py-5 flex items-center justify-between">
-          <button onClick={startOver} className="text-left">
-            <h1 className="text-4xl font-bold tracking-tight">PositionPilot</h1>
-            <p className="text-xs text-muted-foreground">AI GTM Strategy Engine</p>
+      <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+        <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-between">
+          <button
+            onClick={() => setScreen("landing")}
+            className="text-left flex items-center gap-2"
+            aria-label="PositionPilot home"
+          >
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-foreground text-background text-xs font-bold">
+              P
+            </span>
+            <span className="text-base font-semibold tracking-tight">PositionPilot</span>
           </button>
-          {screen !== "landing" && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Step active={screen === "form"} done={screen !== "form"} label="1. Input" />
-            <span>→</span>
-            <Step active={screen === "review"} done={screen === "results"} label="2. Review" />
-            <span>→</span>
-            <Step active={screen === "results"} done={false} label="3. Strategy" />
-          </div>
-          )}
+          <Button
+            size="sm"
+            onClick={() => setScreen("form")}
+            variant={screen === "form" ? "outline" : "default"}
+          >
+            Generate Strategy
+          </Button>
         </div>
       </header>
 
