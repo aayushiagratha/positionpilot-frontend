@@ -567,16 +567,26 @@ function Index() {
       <Toaster />
       <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/70">
         <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-between">
-          <button
-            onClick={() => setScreen("landing")}
-            className="text-left flex items-center gap-2"
-            aria-label="PositionPilot home"
-          >
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-foreground text-background text-xs font-bold">
-              P
-            </span>
-            <span className="text-base font-semibold tracking-tight">PositionPilot</span>
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setScreen("landing")}
+              className="text-left flex items-center gap-2"
+              aria-label="PositionPilot home"
+            >
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-foreground text-background text-xs font-bold">
+                P
+              </span>
+              <span className="text-base font-semibold tracking-tight">PositionPilot</span>
+            </button>
+            {screen !== "landing" && (
+              <button
+                onClick={() => setScreen("landing")}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                ← Home
+              </button>
+            )}
+          </div>
           <Button
             size="sm"
             onClick={() => setScreen("form")}
@@ -1205,7 +1215,7 @@ function Landing({ onStart }: { onStart: () => void }) {
                 full features and require complex setup."
               </p>
             </div>
-            <div className="mt-8">
+            <div className="mt-8 pb-32">
               <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                 Buying Triggers
               </div>
@@ -1213,13 +1223,16 @@ function Landing({ onStart }: { onStart: () => void }) {
                 <li className="flex gap-2"><span className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />A team member misses a key customer commitment mentioned in a meeting</li>
                 <li className="flex gap-2"><span className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />Monthly recurring revenue targets are missed due to poorly tracked call follow-ups</li>
                 <li className="flex gap-2"><span className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />A competitor gains an edge by leveraging meeting insights that the team lacks</li>
+                <li className="flex gap-2"><span className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />Sales leadership demands accurate forecasting based on call signals</li>
+                <li className="flex gap-2"><span className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />Customer success teams need handoff context from sales conversations</li>
               </ul>
             </div>
-            {/* Subtle bottom fade hint (does not cover content) */}
-            <div className="pointer-events-none mt-8 h-16 -mx-8 md:-mx-10 -mb-8 md:-mb-10 bg-gradient-to-t from-card to-transparent" />
-          </div>
-          <div className="mt-6 flex justify-center">
-            <Button onClick={onStart}>Generate your strategy to see the full output</Button>
+            {/* Bottom fade overlay with CTA inside the card */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-card via-card/95 to-transparent flex items-end justify-center pb-8">
+              <Button onClick={onStart} className="pointer-events-auto">
+                Generate your strategy to see the full output
+              </Button>
+            </div>
           </div>
         </div>
       </section>
