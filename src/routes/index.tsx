@@ -226,7 +226,6 @@ function Index() {
   const [recent, setRecent] = useState<RecentRun[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [rawResponse, setRawResponse] = useState<string | null>(null);
-  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
 
   useEffect(() => {
     setRecent(loadRecent());
