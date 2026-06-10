@@ -226,7 +226,6 @@ function Index() {
   const [recent, setRecent] = useState<RecentRun[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [rawResponse, setRawResponse] = useState<string | null>(null);
-  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
 
   useEffect(() => {
     setRecent(loadRecent());
@@ -333,9 +332,6 @@ function Index() {
       }
       const s2 = normalizeStage2(data);
       setStage2(s2);
-      if ((data as any)?.pdf_base64) {
-        setPdfBase64((data as any).pdf_base64);
-      }
       setCompletedAt(Date.now());
       if (stage1?.generation_run_id) {
         upsertRecent({
@@ -398,19 +394,6 @@ function Index() {
   };
 
 
-  const downloadPdf = () => {
-    if (!pdfBase64) return;
-    const byteCharacters = atob(pdfBase64);
-    const byteNumbers = new Array(byteCharacters.length).fill(0).map((_, i) => byteCharacters.charCodeAt(i));
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${(form.company_name || 'PositionPilot').replace(/[^a-z0-9-_ ]/gi, '').trim().replace(/\s+/g, '_')}_GTM_Report.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   const deleteRun = (id: string) => {
     setRecent((prev) => {
@@ -689,7 +672,7 @@ function Index() {
                 )}
               </div>
               <div className="flex shrink-0 gap-2">
-                <Button onClick={downloadPdf} disabled={!pdfBase64}>Download PDF</Button>
+                <Button disabled={true} variant="outline">PDF Report (Coming Soon)</Button>
                 <Button variant="outline" onClick={runAnother}>Run for another company</Button>
                 <Button variant="outline" onClick={startOver}>Start Over</Button>
               </div>
