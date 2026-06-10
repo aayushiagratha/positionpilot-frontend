@@ -397,22 +397,6 @@ function Index() {
     toast.success(`Loaded "${run.company_name}" into the form`);
   };
 
-  // jsPDF's default Helvetica font uses WinAnsi encoding and cannot render
-  // characters like → ←  — “ ” ’ • etc. Replace them with ASCII equivalents
-  // before drawing, otherwise glyphs render as garbage (e.g. "!'" for "→").
-  const sanitizeForPdf = (input: string): string =>
-    input
-      .replace(/\u2192/g, "->")
-      .replace(/\u2190/g, "<-")
-      .replace(/\u2194/g, "<->")
-      .replace(/\u21D2/g, "=>")
-      .replace(/[\u2013\u2014]/g, "-")
-      .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
-      .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
-      .replace(/\u2022/g, "*")
-      .replace(/\u00A0/g, " ")
-      .replace(/\u2026/g, "...")
-      .replace(/[^\x00-\xFF]/g, "?");
 
   const downloadPdf = () => {
     if (!pdfBase64) return;
