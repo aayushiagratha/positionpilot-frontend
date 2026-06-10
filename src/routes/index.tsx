@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
-import jsPDF from "jspdf";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -226,6 +226,7 @@ function Index() {
   const [recent, setRecent] = useState<RecentRun[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [rawResponse, setRawResponse] = useState<string | null>(null);
+  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
 
   useEffect(() => {
     setRecent(loadRecent());
@@ -332,6 +333,9 @@ function Index() {
       }
       const s2 = normalizeStage2(data);
       setStage2(s2);
+      if ((data as any)?.pdf_base64) {
+        setPdfBase64((data as any).pdf_base64);
+      }
       setCompletedAt(Date.now());
       if (stage1?.generation_run_id) {
         upsertRecent({
@@ -393,165 +397,19 @@ function Index() {
     toast.success(`Loaded "${run.company_name}" into the form`);
   };
 
-  // jsPDF's default Helvetica font uses WinAnsi encoding and cannot render
-  // characters like → ←  — “ ” ’ • etc. Replace them with ASCII equivalents
-  // before drawing, otherwise glyphs render as garbage (e.g. "!'" for "→").
-  const sanitizeForPdf = (input: string): string =>
-    input
-      .replace(/\u2192/g, "->")
-      .replace(/\u2190/g, "<-")
-      .replace(/\u2194/g, "<->")
-      .replace(/\u21D2/g, "=>")
-      .replace(/[\u2013\u2014]/g, "-")
-      .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
-      .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
-      .replace(/\u2022/g, "*")
-      .replace(/\u00A0/g, " ")
-      .replace(/\u2026/g, "...")
-      .replace(/[^\x00-\xFF]/g, "?");
 
   const downloadPdf = () => {
-    if (!stage1 && !stage2) return;
-    const doc = new jsPDF({ unit: "pt", format: "letter" });
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
-    const margin = 48;
-    const maxW = pageW - margin * 2;
-    let y = margin;
-
-    const ensureSpace = (h: number) => {
-      if (y + h > pageH - margin) {
-        doc.addPage();
-        y = margin;
-      }
-    };
-    const writeWrapped = (text: string, size: number, style: "normal" | "bold" = "normal") => {
-      if (!text) return;
-      doc.setFont("helvetica", style);
-      doc.setFontSize(size);
-      const lines = doc.splitTextToSize(sanitizeForPdf(text), maxW) as string[];
-      const lh = size * 1.35;
-      for (const line of lines) {
-        ensureSpace(lh);
-        doc.text(line, margin, y);
-        y += lh;
-      }
-    };
-    const sectionDivider = (label: string) => {
-      doc.addPage();
-      y = margin;
-      // Accent bar
-      doc.setFillColor(15, 23, 42);
-      doc.rect(margin, y, maxW, 36, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(18);
-      doc.text(sanitizeForPdf(label.toUpperCase()), margin + 12, y + 24);
-      doc.setTextColor(0, 0, 0);
-      y += 36 + 20;
-    };
-    const subheading = (t: string) => {
-      y += 8;
-      writeWrapped(t, 13, "bold");
-      // Underline
-      ensureSpace(6);
-      doc.setDrawColor(180, 180, 180);
-      doc.line(margin, y - 2, margin + 60, y - 2);
-      y += 4;
-    };
-    const para = (t?: string) => { if (t) { writeWrapped(t, 11); y += 6; } };
-    const bullets = (items?: string[]) => {
-      if (!items?.length) return;
-      for (const it of items) writeWrapped("- " + it, 11);
-      y += 6;
-    };
-
-    const company = form.company_name || stage1?.generation_run_id || "PositionPilot";
-
-    // === COVER PAGE ===
-    doc.setFillColor(15, 23, 42);
-    doc.rect(0, 0, pageW, pageH, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text("POSITIONPILOT", margin, margin + 20);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
-    doc.text("Strategic Positioning, On Demand", margin, margin + 38);
-
-    // Company name large
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(40);
-    const companyLines = doc.splitTextToSize(sanitizeForPdf(company), maxW) as string[];
-    let cy = pageH / 2 - 60;
-    for (const line of companyLines) {
-      doc.text(line, margin, cy);
-      cy += 46;
-    }
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(20);
-    doc.text("GTM Strategy Report", margin, cy + 10);
-
-    // Footer info
-    doc.setFontSize(11);
-    const dateStr = new Date().toLocaleDateString(undefined, {
-      year: "numeric", month: "long", day: "numeric",
-    });
-    doc.text(sanitizeForPdf(dateStr), margin, pageH - margin - 40);
-    if (form.marketing_stage) {
-      doc.setFont("helvetica", "bold");
-      doc.text("Marketing Stage:", margin, pageH - margin - 20);
-      doc.setFont("helvetica", "normal");
-      doc.text(sanitizeForPdf(form.marketing_stage), margin + 110, pageH - margin - 20);
-    }
-    doc.setTextColor(0, 0, 0);
-
-    sectionDivider("Positioning");
-    subheading("Positioning Statement");
-    para(stage1?.positioning_statement);
-    subheading("Differentiation Pillars");
-    bullets(stage1?.differentiation_pillars);
-
-    sectionDivider("ICP — Ideal Customer Profile");
-    subheading("ICP Summary");
-    para(stage1?.icp_summary);
-    subheading("Buying Triggers");
-    bullets(stage1?.buying_triggers);
-
-    const m = stage2?.messaging_output;
-    sectionDivider("Messaging");
-    subheading("Hero Headline"); para(m?.hero_headline);
-    subheading("Subheadline / Value Prop"); para(m?.subheadline_value_prop);
-    subheading("Conversion Hook"); para(m?.conversion_hook);
-    subheading("Core Messaging Pillars");
-    if (m?.core_messaging_pillars?.length) {
-      for (const p of m.core_messaging_pillars) {
-        writeWrapped(p.pillar_title || "", 11, "bold");
-        para(p.supporting_copy);
-      }
-    }
-
-    const g = stage2?.gtm_output;
-    sectionDivider("Go-To-Market");
-    subheading("Primary Distribution Channels"); bullets(g?.primary_distribution_channels);
-    subheading("Growth Loops Identified"); bullets(g?.growth_loops_identified);
-    subheading("Launch Sequencing Playbook"); para(g?.launch_sequencing_playbook);
-    subheading("Initial 30-Day Milestones"); bullets(g?.initial_30_day_milestones);
-
-    const s = stage2?.seo_output;
-    sectionDivider("SEO");
-    subheading("AEO Citation Strategy"); para(s?.aeo_citation_strategy);
-    subheading("High-Intent Search Queries"); bullets(s?.high_intent_search_queries);
-    subheading("Topical Authority Clusters");
-    if (s?.topical_authority_clusters?.length) {
-      for (const c of s.topical_authority_clusters) {
-        writeWrapped(c.core_pillar || "", 11, "bold");
-        bullets(c.sub_topics);
-      }
-    }
-
-    const safe = company.replace(/[^a-z0-9-_ ]/gi, "").trim().replace(/\s+/g, "_") || "PositionPilot";
-    doc.save(`${safe}.pdf`);
+    if (!pdfBase64) return;
+    const byteCharacters = atob(pdfBase64);
+    const byteNumbers = new Array(byteCharacters.length).fill(0).map((_, i) => byteCharacters.charCodeAt(i));
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${(form.company_name || 'PositionPilot').replace(/[^a-z0-9-_ ]/gi, '').trim().replace(/\s+/g, '_')}_GTM_Report.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const deleteRun = (id: string) => {
@@ -831,7 +689,7 @@ function Index() {
                 )}
               </div>
               <div className="flex shrink-0 gap-2">
-                <Button onClick={downloadPdf}>Download PDF</Button>
+                <Button onClick={downloadPdf} disabled={!pdfBase64}>Download PDF</Button>
                 <Button variant="outline" onClick={runAnother}>Run for another company</Button>
                 <Button variant="outline" onClick={startOver}>Start Over</Button>
               </div>
