@@ -177,7 +177,7 @@ function formatUnknownError(err: unknown, fallback: string) {
   return typeof err === "string" ? err : fallback;
 }
 
-function CopyButton({ text }: { text: string }) {
+function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false);
   const onCopy = async () => {
     try {
@@ -190,9 +190,108 @@ function CopyButton({ text }: { text: string }) {
   };
   return (
     <Button type="button" variant="outline" size="sm" onClick={onCopy} className="shrink-0">
-      {copied ? "✓ Copied" : "Copy"}
+      {copied ? "✓ Copied" : label}
     </Button>
   );
+}
+
+function SectionCopyBar({ label, text }: { label: string; text: string }) {
+  return (
+    <div className="flex items-center justify-end">
+      <CopyButton text={text} label={`Copy ${label}`} />
+    </div>
+  );
+}
+
+function formatPositioningSection(s1: Stage1Response): string {
+  return [
+    "POSITIONING STATEMENT",
+    s1.positioning_statement || "—",
+    "",
+    "DIFFERENTIATION PILLARS",
+    ...(s1.differentiation_pillars?.length
+      ? s1.differentiation_pillars.map((p, i) => `${i + 1}. ${p}`)
+      : ["—"]),
+  ].join("\n");
+}
+
+function formatIcpSection(s1: Stage1Response): string {
+  const fears = (s1 as any).customer_fears as string[] | undefined;
+  const lines = [
+    "ICP SUMMARY",
+    s1.icp_summary || "—",
+    "",
+    "BUYING TRIGGERS",
+    ...(s1.buying_triggers?.length ? s1.buying_triggers.map((t, i) => `${i + 1}. ${t}`) : ["—"]),
+  ];
+  if (fears?.length) {
+    lines.push("", "CUSTOMER FEARS", ...fears.map((f, i) => `${i + 1}. ${f}`));
+  }
+  return lines.join("\n");
+}
+
+function formatMessagingSection(s2: Stage2Response): string {
+  const m = s2.messaging_output;
+  const lines = [
+    "HERO HEADLINE",
+    m?.hero_headline || "—",
+  ];
+  if (m?.subheadline_value_prop) lines.push("", "SUBHEADLINE", m.subheadline_value_prop);
+  if (m?.conversion_hook) lines.push("", "CONVERSION HOOK", m.conversion_hook);
+  lines.push("", "CORE MESSAGING PILLARS");
+  if (m?.core_messaging_pillars?.length) {
+    m.core_messaging_pillars.forEach((p, i) => {
+      lines.push(`${i + 1}. ${p.pillar_title || "—"}`);
+      if (p.supporting_copy) lines.push(`   ${p.supporting_copy}`);
+    });
+  } else {
+    lines.push("—");
+  }
+  return lines.join("\n");
+}
+
+function formatGtmSection(s2: Stage2Response): string {
+  const g = s2.gtm_output;
+  return [
+    "PRIMARY DISTRIBUTION CHANNELS",
+    ...(g?.primary_distribution_channels?.length
+      ? g.primary_distribution_channels.map((c, i) => `${i + 1}. ${c}`)
+      : ["—"]),
+    "",
+    "LAUNCH SEQUENCING PLAYBOOK",
+    g?.launch_sequencing_playbook || "—",
+    "",
+    "GROWTH LOOPS IDENTIFIED",
+    ...(g?.growth_loops_identified?.length
+      ? g.growth_loops_identified.map((c, i) => `${i + 1}. ${c}`)
+      : ["—"]),
+    "",
+    "INITIAL 30-DAY MILESTONES",
+    ...(g?.initial_30_day_milestones?.length
+      ? g.initial_30_day_milestones.map((c, i) => `${i + 1}. ${c}`)
+      : ["—"]),
+  ].join("\n");
+}
+
+function formatSeoSection(s2: Stage2Response): string {
+  const seo = s2.seo_output;
+  const lines = ["TOPICAL AUTHORITY CLUSTERS"];
+  if (seo?.topical_authority_clusters?.length) {
+    seo.topical_authority_clusters.forEach((c) => {
+      lines.push(`- ${c.core_pillar || "—"}`);
+      c.sub_topics?.forEach((s) => lines.push(`   • ${s}`));
+    });
+  } else {
+    lines.push("—");
+  }
+  lines.push("", "HIGH-INTENT SEARCH QUERIES");
+  lines.push(
+    ...(seo?.high_intent_search_queries?.length
+      ? seo.high_intent_search_queries.map((q, i) => `${i + 1}. ${q}`)
+      : ["—"]),
+  );
+  lines.push("", "AEO CITATION STRATEGY", seo?.aeo_citation_strategy || "—");
+  return lines.join("\n");
 }
 
 type WebhookStage = "stage1" | "approve" | "stage2";
@@ -694,6 +793,7 @@ function Index() {
 
               {/* POSITIONING */}
               <TabsContent value="positioning" className="mt-8 space-y-8">
+                <SectionCopyBar label="Positioning" text={formatPositioningSection(stage1 || {})} />
                 <Block title="Positioning Statement" description="The single sentence that defines who you serve and how you win.">
                   <div className="flex items-start gap-3">
                     <p className="flex-1 text-base leading-relaxed text-foreground whitespace-pre-wrap">
@@ -709,6 +809,7 @@ function Index() {
 
               {/* ICP */}
               <TabsContent value="icp" className="mt-8 space-y-8">
+                <SectionCopyBar label="ICP" text={formatIcpSection(stage1 || {})} />
                 <Block title="ICP Summary" description="Your primary target persona in one paragraph.">
                   <div className="flex items-start gap-3">
                     <p className="flex-1 text-base leading-relaxed text-foreground whitespace-pre-wrap">
@@ -729,6 +830,7 @@ function Index() {
 
               {/* MESSAGING */}
               <TabsContent value="messaging" className="mt-8 space-y-10">
+                <SectionCopyBar label="Messaging" text={formatMessagingSection(stage2)} />
                 <section className="rounded-2xl border bg-card p-8 md:p-12">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                     Hero Headline
@@ -781,6 +883,7 @@ function Index() {
 
               {/* GTM */}
               <TabsContent value="gtm" className="mt-8 space-y-8">
+                <SectionCopyBar label="GTM" text={formatGtmSection(stage2)} />
                 <Block title="Primary Distribution Channels" description="Where your earliest customers will actually find you.">
                   <NumberedList items={stage2.gtm_output?.primary_distribution_channels} />
                 </Block>
@@ -797,6 +900,7 @@ function Index() {
 
               {/* SEO */}
               <TabsContent value="seo" className="mt-8 space-y-8">
+                <SectionCopyBar label="SEO" text={formatSeoSection(stage2)} />
                 <Block title="Topical Authority Clusters" description="Pillar topics and the supporting sub-topics that build authority.">
                   {stage2.seo_output?.topical_authority_clusters?.length ? (
                     <div className="grid gap-4 md:grid-cols-2">
