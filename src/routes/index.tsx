@@ -715,9 +715,12 @@ function Index() {
               {/* POSITIONING */}
               <TabsContent value="positioning" className="mt-8 space-y-8">
                 <Block title="Positioning Statement" description="The single sentence that defines who you serve and how you win.">
-                  <p className="text-base leading-relaxed text-foreground whitespace-pre-wrap">
-                    {stage1?.positioning_statement || "—"}
-                  </p>
+                  <div className="flex items-start gap-3">
+                    <p className="flex-1 text-base leading-relaxed text-foreground whitespace-pre-wrap">
+                      {stage1?.positioning_statement || "—"}
+                    </p>
+                    <CopyButton text={stage1?.positioning_statement || ""} />
+                  </div>
                 </Block>
                 <Block title="Differentiation Pillars" description="The proof points that make the positioning defensible.">
                   <NumberedList items={stage1?.differentiation_pillars} />
@@ -727,9 +730,12 @@ function Index() {
               {/* ICP */}
               <TabsContent value="icp" className="mt-8 space-y-8">
                 <Block title="ICP Summary" description="Your primary target persona in one paragraph.">
-                  <p className="text-base leading-relaxed text-foreground whitespace-pre-wrap">
-                    {stage1?.icp_summary || "—"}
-                  </p>
+                  <div className="flex items-start gap-3">
+                    <p className="flex-1 text-base leading-relaxed text-foreground whitespace-pre-wrap">
+                      {stage1?.icp_summary || "—"}
+                    </p>
+                    <CopyButton text={stage1?.icp_summary || ""} />
+                  </div>
                 </Block>
                 <Block title="Buying Triggers" description="The events that move them from passive to actively shopping.">
                   <NumberedList items={stage1?.buying_triggers} />
@@ -747,9 +753,12 @@ function Index() {
                   <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                     Hero Headline
                   </div>
-                  <h3 className="mt-4 text-4xl font-bold leading-[1.1] tracking-tight md:text-5xl">
-                    {stage2.messaging_output?.hero_headline || "—"}
-                  </h3>
+                  <div className="mt-4 flex items-start gap-3">
+                    <h3 className="flex-1 text-4xl font-bold leading-[1.1] tracking-tight md:text-5xl">
+                      {stage2.messaging_output?.hero_headline || "—"}
+                    </h3>
+                    <CopyButton text={stage2.messaging_output?.hero_headline || ""} />
+                  </div>
                   {stage2.messaging_output?.subheadline_value_prop && (
                     <p className="mt-6 max-w-3xl text-lg leading-relaxed text-muted-foreground">
                       {stage2.messaging_output.subheadline_value_prop}
@@ -762,9 +771,12 @@ function Index() {
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
                       Conversion Hook
                     </div>
-                    <p className="mt-2 text-lg font-medium leading-relaxed text-foreground">
-                      {stage2.messaging_output.conversion_hook}
-                    </p>
+                    <div className="mt-2 flex items-start gap-3">
+                      <p className="flex-1 text-lg font-medium leading-relaxed text-foreground">
+                        {stage2.messaging_output.conversion_hook}
+                      </p>
+                      <CopyButton text={stage2.messaging_output.conversion_hook} />
+                    </div>
                   </section>
                 )}
 
@@ -848,9 +860,12 @@ function Index() {
                   </p>
                 </Block>
                 <Block title="AEO Citation Strategy" description="How to get cited by LLMs and answer engines.">
-                  <p className="text-base leading-relaxed text-foreground whitespace-pre-wrap">
-                    {stage2.seo_output?.aeo_citation_strategy || "—"}
-                  </p>
+                  <div className="flex items-start gap-3">
+                    <p className="flex-1 text-base leading-relaxed text-foreground whitespace-pre-wrap">
+                      {stage2.seo_output?.aeo_citation_strategy || "—"}
+                    </p>
+                    <CopyButton text={stage2.seo_output?.aeo_citation_strategy || ""} />
+                  </div>
                 </Block>
               </TabsContent>
             </Tabs>
