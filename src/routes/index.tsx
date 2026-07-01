@@ -180,6 +180,24 @@ function formatUnknownError(err: unknown, fallback: string) {
   return typeof err === "string" ? err : fallback;
 }
 
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const onCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text || "");
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Failed to copy");
+    }
+  };
+  return (
+    <Button type="button" variant="outline" size="sm" onClick={onCopy} className="shrink-0">
+      {copied ? "✓ Copied" : "Copy"}
+    </Button>
+  );
+}
+
 async function postWebhook(url: string, payload: unknown, label: string, timeoutMs = 300_000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
