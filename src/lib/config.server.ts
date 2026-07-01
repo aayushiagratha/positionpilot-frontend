@@ -23,5 +23,7 @@ export function getServerConfig() {
     approveUrl: process.env.POSITIONPILOT_APPROVE_URL,
     stage2Url: process.env.POSITIONPILOT_STAGE2_URL,
     webhookApiKey: process.env.POSITIONPILOT_WEBHOOK_API_KEY,
+    supabaseUrl: process.env.SUPABASE_URL,
+    supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
   };
 }

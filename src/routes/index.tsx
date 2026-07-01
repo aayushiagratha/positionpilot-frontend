@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { callPositionPilotWebhook } from "@/lib/api/webhook.functions";
+import { joinWaitlist } from "@/lib/api/waitlist.functions";
 
 
 export const Route = createFileRoute("/")({
@@ -999,29 +1000,32 @@ function Footer() {
 function Landing({ onStart }: { onStart: () => void }) {
   const [email, setEmail] = useState("");
   const [joined, setJoined] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const scrollToSample = () => {
     document.getElementById("sample")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const submitEmail = (e: React.FormEvent) => {
+  const submitEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     const v = email.trim();
     if (!v || !v.includes("@")) {
       toast.error("Please enter a valid email");
       return;
     }
+    setSubmitting(true);
     try {
-      const raw = window.localStorage.getItem("positionpilot:waitlist");
-      const list: string[] = raw ? JSON.parse(raw) : [];
-      if (!list.includes(v)) list.push(v);
-      window.localStorage.setItem("positionpilot:waitlist", JSON.stringify(list));
-    } catch {
-      /* ignore */
+      await joinWaitlist({ data: { email: v } });
+      setJoined(true);
+      setEmail("");
+      toast.success("You're on the waitlist");
+    } catch (err) {
+      const msg = formatUnknownError(err, "Failed to join waitlist");
+      console.error("PositionPilot waitlist signup error", { error: err, message: msg });
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
     }
-    setJoined(true);
-    setEmail("");
-    toast.success("You're on the waitlist");
   };
 
   const outputs = [
@@ -1226,7 +1230,7 @@ function Landing({ onStart }: { onStart: () => void }) {
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
-              <Button type="submit">Join Waitlist</Button>
+              <Button type="submit" disabled={submitting}>{submitting ? "Joining…" : "Join Waitlist"}</Button>
             </form>
           )}
           <p className="mt-3 text-xs text-muted-foreground">
