@@ -175,18 +175,21 @@ function normalizeStage2(raw: unknown): Stage2Response {
 
 function formatUnknownError(err: unknown, fallback: string) {
   if (err instanceof Error) {
-    return [err.name, err.message, err.stack].filter(Boolean).join("\n");
+    return [err.name, err.message].filter(Boolean).join("\n");
   }
   return typeof err === "string" ? err : fallback;
 }
 
-async function postWebhook(url: string, payload: unknown, label: string, timeoutMs = 180_000) {
+async function postWebhook(url: string, payload: unknown, label: string, timeoutMs = 300_000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": "74811f22c7f49d12d98fef83abb582c8",
+      },
       body: JSON.stringify(payload),
       signal: controller.signal,
     });
@@ -447,11 +450,6 @@ function Index() {
             <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-destructive">
               {error}
             </pre>
-            {rawResponse && (
-              <pre className="mt-3 max-h-60 overflow-auto whitespace-pre-wrap break-words rounded border border-destructive/20 p-3 font-mono text-xs leading-relaxed">
-                {rawResponse}
-              </pre>
-            )}
           </div>
         )}
 
@@ -600,18 +598,6 @@ function Index() {
                 </pre>
               </CardContent>
             </Card>
-            {rawResponse && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Raw response</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words font-mono text-xs leading-relaxed">
-                    {rawResponse || "<empty>"}
-                  </pre>
-                </CardContent>
-              </Card>
-            )}
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={startOver}>Back to form</Button>
             </div>
