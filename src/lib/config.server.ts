@@ -19,8 +19,9 @@ import process from "node:process";
 export function getServerConfig() {
   return {
     nodeEnv: process.env.NODE_ENV,
-    // Add server-only values here, e.g.:
-    //   databaseUrl: process.env.DATABASE_URL,
-    //   stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+    stage1Url: process.env.POSITIONPILOT_STAGE1_URL,
+    approveUrl: process.env.POSITIONPILOT_APPROVE_URL,
+    stage2Url: process.env.POSITIONPILOT_STAGE2_URL,
+    webhookApiKey: process.env.POSITIONPILOT_WEBHOOK_API_KEY,
   };
 }

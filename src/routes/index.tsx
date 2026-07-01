@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
+import { callPositionPilotWebhook } from "@/lib/api/webhook.functions";
 
 
 export const Route = createFileRoute("/")({
@@ -24,10 +25,6 @@ export const Route = createFileRoute("/")({
   }),
   component: Index,
 });
-
-const STAGE1_URL = "https://blabber-ahead-defective.ngrok-free.dev/webhook/positionpilot-stage1";
-const APPROVE_URL = "https://blabber-ahead-defective.ngrok-free.dev/webhook/approve-run";
-const STAGE2_URL = "https://blabber-ahead-defective.ngrok-free.dev/webhook/positionpilot-stage2";
 
 const FIELDS = [
   { key: "company_name", label: "Company Name", type: "input", placeholder: "e.g. Fathom", helper: "The legal or brand name customers will see." },
@@ -198,40 +195,26 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-async function postWebhook(url: string, payload: unknown, label: string, timeoutMs = 300_000) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+type WebhookStage = "stage1" | "approve" | "stage2";
+
+async function postWebhook(stage: WebhookStage, payload: unknown, label: string, timeoutMs = 300_000) {
   try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": "74811f22c7f49d12d98fef83abb582c8",
-      },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
-    const text = await res.text();
+    const result = await callPositionPilotWebhook({ data: { stage, payload, timeoutMs } });
+    const res = { ok: result.ok, status: result.status, statusText: result.statusText };
     const details = {
       label,
-      url,
-      ok: res.ok,
-      status: res.status,
-      statusText: res.statusText,
-      headers: Object.fromEntries(res.headers.entries()),
-      body: text || "<empty body>",
+      stage,
+      ok: result.ok,
+      status: result.status,
+      statusText: result.statusText,
+      body: result.text || "<empty body>",
     };
     console.log("PositionPilot webhook response", details);
-    return { res, text, details };
+    return { res, text: result.text, details };
   } catch (err) {
-    const aborted = (err as { name?: string } | null)?.name === "AbortError";
-    const message = aborted
-      ? `${label} request timed out after ${Math.round(timeoutMs / 1000)}s`
-      : formatUnknownError(err, `${label} request failed before a response was received`);
-    console.error("PositionPilot webhook network error", { label, url, error: err, message });
+    const message = formatUnknownError(err, `${label} request failed before a response was received`);
+    console.error("PositionPilot webhook network error", { label, stage, error: err, message });
     throw new Error(`${label} network error:\n${message}`);
-  } finally {
-    clearTimeout(timer);
   }
 }
 
@@ -272,7 +255,7 @@ function Index() {
     setRawResponse(null);
     setScreen("review");
     try {
-      const { res, text } = await postWebhook(STAGE1_URL, form, "Stage 1");
+      const { res, text } = await postWebhook("stage1", form, "Stage 1");
       setRawResponse(text);
       if (!res.ok) {
         throw new Error(`Stage 1 failed (${res.status} ${res.statusText}): ${text || "<empty body>"}`);
@@ -318,7 +301,7 @@ function Index() {
     try {
       // 1. Approve the run
       const { res: approveRes, text: approveText } = await postWebhook(
-        APPROVE_URL,
+        "approve",
         { generation_run_id: runId },
         "Approve",
       );
@@ -332,12 +315,9 @@ function Index() {
         company_name: form.company_name,
         marketing_stage: form.marketing_stage,
       };
-      console.log("PositionPilot Stage 2 request", {
-        url: STAGE2_URL,
-        body: stage2Body,
-      });
+      console.log("PositionPilot Stage 2 request", { body: stage2Body });
       const { res, text } = await postWebhook(
-        STAGE2_URL,
+        "stage2",
         stage2Body,
         "Stage 2",
       );
