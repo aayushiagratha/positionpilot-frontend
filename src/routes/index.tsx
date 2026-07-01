@@ -636,8 +636,30 @@ function Index() {
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              <Section title="Positioning Statement" body={stage1.positioning_statement} />
-              <Section title="ICP Summary" body={stage1.icp_summary} />
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Positioning Statement</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    rows={5}
+                    value={stage1.positioning_statement || ""}
+                    onChange={(e) => setStage1({ ...stage1, positioning_statement: e.target.value })}
+                  />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">ICP Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    rows={5}
+                    value={stage1.icp_summary || ""}
+                    onChange={(e) => setStage1({ ...stage1, icp_summary: e.target.value })}
+                  />
+                </CardContent>
+              </Card>
               <Section title="Differentiation Pillars" items={stage1.differentiation_pillars} />
               <Section title="Buying Triggers" items={stage1.buying_triggers} />
             </div>
