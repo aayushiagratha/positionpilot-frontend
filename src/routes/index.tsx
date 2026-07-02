@@ -740,8 +740,24 @@ function Index() {
                   />
                 </CardContent>
               </Card>
-              <Section title="Differentiation Pillars" items={stage1.differentiation_pillars} />
-              <Section title="Buying Triggers" items={stage1.buying_triggers} />
+              <Section
+                title="Differentiation Pillars"
+                items={stage1.differentiation_pillars}
+                onItemChange={(i, value) => {
+                  const next = [...(stage1.differentiation_pillars || [])];
+                  next[i] = value;
+                  setStage1({ ...stage1, differentiation_pillars: next });
+                }}
+              />
+              <Section
+                title="Buying Triggers"
+                items={stage1.buying_triggers}
+                onItemChange={(i, value) => {
+                  const next = [...(stage1.buying_triggers || [])];
+                  next[i] = value;
+                  setStage1({ ...stage1, buying_triggers: next });
+                }}
+              />
             </div>
             <div className="flex flex-wrap justify-end gap-3">
               <Button variant="outline" onClick={startOver} disabled={loading}>
@@ -1242,7 +1258,17 @@ function Landing({ onStart }: { onStart: () => void }) {
   );
 }
 
-function Section({ title, body, items }: { title: string; body?: string; items?: string[] }) {
+function Section({
+  title,
+  body,
+  items,
+  onItemChange,
+}: {
+  title: string;
+  body?: string;
+  items?: string[];
+  onItemChange?: (index: number, value: string) => void;
+}) {
   const hasItems = items && items.length > 0;
   return (
     <Card>
@@ -1251,11 +1277,19 @@ function Section({ title, body, items }: { title: string; body?: string; items?:
       </CardHeader>
       <CardContent>
         {hasItems ? (
-          <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-foreground">
-            {items!.map((item, i) => (
-              <li key={i} className="whitespace-pre-wrap">{item}</li>
-            ))}
-          </ul>
+          onItemChange ? (
+            <div className="space-y-2">
+              {items!.map((item, i) => (
+                <Input key={i} value={item} onChange={(e) => onItemChange(i, e.target.value)} />
+              ))}
+            </div>
+          ) : (
+            <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-foreground">
+              {items!.map((item, i) => (
+                <li key={i} className="whitespace-pre-wrap">{item}</li>
+              ))}
+            </ul>
+          )
         ) : (
           <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground">
             {body || "—"}
