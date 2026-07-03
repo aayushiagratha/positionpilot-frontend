@@ -1364,9 +1364,10 @@ function Section({
           onItemChange ? (
             <div className="space-y-2">
               {items!.map((item, i) => (
-                <Input
+                <Textarea
                   key={i}
                   value={item}
+                  rows={2}
                   aria-label={`${title} ${i + 1}`}
                   onChange={(e) => onItemChange(i, e.target.value)}
                 />
