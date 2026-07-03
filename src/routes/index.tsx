@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -577,7 +578,7 @@ function Index() {
         </AlertDialogContent>
       </AlertDialog>
       <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-        <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-between">
+        <div className="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={goLanding}
@@ -650,17 +651,19 @@ function Index() {
                       rows={3}
                     />
                   ) : f.type === "select" ? (
-                    <select
-                      id={f.key}
+                    <Select
                       value={form[f.key]}
-                      onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      onValueChange={(value) => setForm({ ...form, [f.key]: value })}
                     >
-                      <option value="">{f.placeholder}</option>
-                      {MARKETING_STAGES.map((opt) => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
+                      <SelectTrigger id={f.key} className="h-10 w-full">
+                        <SelectValue placeholder={f.placeholder} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MARKETING_STAGES.map((opt) => (
+                          <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   ) : (
                     <Input
                       id={f.key}
@@ -702,16 +705,15 @@ function Index() {
                       {new Date(r.created_at).toLocaleString()} · {r.generation_run_id}
                     </div>
                   </button>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => prefillFromRun(r)}>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <Button variant="outline" onClick={() => prefillFromRun(r)}>
                       Prefill
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => openRun(r)}>
+                    <Button variant="ghost" onClick={() => openRun(r)}>
                       View
                     </Button>
                     <Button
                       variant="ghost"
-                      size="sm"
                       className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                       onClick={() => setPendingDeleteId(r.generation_run_id)}
                     >
@@ -877,12 +879,12 @@ function Index() {
               </div>
             </div>
             <Tabs defaultValue="positioning" className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="positioning">Positioning</TabsTrigger>
-                <TabsTrigger value="icp">ICP</TabsTrigger>
-                <TabsTrigger value="messaging">Messaging</TabsTrigger>
-                <TabsTrigger value="gtm">GTM</TabsTrigger>
-                <TabsTrigger value="seo">SEO</TabsTrigger>
+              <TabsList className="flex w-full gap-1 overflow-x-auto md:grid md:grid-cols-5 md:overflow-visible">
+                <TabsTrigger value="positioning" className="shrink-0 md:shrink">Positioning</TabsTrigger>
+                <TabsTrigger value="icp" className="shrink-0 md:shrink">ICP</TabsTrigger>
+                <TabsTrigger value="messaging" className="shrink-0 md:shrink">Messaging</TabsTrigger>
+                <TabsTrigger value="gtm" className="shrink-0 md:shrink">GTM</TabsTrigger>
+                <TabsTrigger value="seo" className="shrink-0 md:shrink">SEO</TabsTrigger>
               </TabsList>
 
               {/* POSITIONING */}
@@ -1141,7 +1143,7 @@ function Landing({ onStart }: { onStart: () => void }) {
       <section className="relative overflow-hidden">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10"
+          className="pp-hero-bg pointer-events-none absolute inset-0 -z-10"
           style={{
             background:
               "linear-gradient(120deg, rgba(99,102,241,0.10), rgba(236,72,153,0.06) 35%, rgba(14,165,233,0.08) 65%, rgba(168,85,247,0.10)), radial-gradient(60% 50% at 50% 0%, rgba(99,102,241,0.12), transparent 70%)",
@@ -1149,7 +1151,12 @@ function Landing({ onStart }: { onStart: () => void }) {
             animation: "pp-hero-gradient 18s ease-in-out infinite",
           }}
         />
-        <style>{`@keyframes pp-hero-gradient { 0%{background-position:0% 50%, 50% 0%} 50%{background-position:100% 50%, 50% 0%} 100%{background-position:0% 50%, 50% 0%} }`}</style>
+        <style>{`
+          @keyframes pp-hero-gradient { 0%{background-position:0% 50%, 50% 0%} 50%{background-position:100% 50%, 50% 0%} 100%{background-position:0% 50%, 50% 0%} }
+          @media (prefers-reduced-motion: reduce) {
+            [aria-hidden].pp-hero-bg { animation: none !important; }
+          }
+        `}</style>
       <div className="mx-auto max-w-5xl px-6 pt-16 pb-20 md:pt-24 md:pb-28 text-center">
         <div className="inline-flex items-center gap-2 rounded-full border bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
@@ -1357,7 +1364,12 @@ function Section({
           onItemChange ? (
             <div className="space-y-2">
               {items!.map((item, i) => (
-                <Input key={i} value={item} onChange={(e) => onItemChange(i, e.target.value)} />
+                <Input
+                  key={i}
+                  value={item}
+                  aria-label={`${title} ${i + 1}`}
+                  onChange={(e) => onItemChange(i, e.target.value)}
+                />
               ))}
             </div>
           ) : (
