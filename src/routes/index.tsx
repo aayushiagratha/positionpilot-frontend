@@ -6,6 +6,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { callPositionPilotWebhook } from "@/lib/api/webhook.functions";
@@ -330,6 +340,8 @@ function Index() {
   const [recent, setRecent] = useState<RecentRun[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [rawResponse, setRawResponse] = useState<string | null>(null);
+  const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     setRecent(loadRecent());
@@ -345,9 +357,14 @@ function Index() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const missing = FIELDS.find((f) => !form[f.key]?.trim());
-    if (missing) {
-      toast.error(`Please fill in ${missing.label}`);
+    const missing = FIELDS.filter((f) => !form[f.key]?.trim());
+    if (missing.length) {
+      toast.error(
+        missing.length === 1
+          ? `Please fill in ${missing[0].label}`
+          : `Please fill in ${missing.length} missing fields: ${missing.map((f) => f.label).join(", ")}`,
+      );
+      document.getElementById(missing[0].key)?.focus();
       return;
     }
     setLoading(true);
@@ -504,14 +521,66 @@ function Index() {
     });
   };
 
+  const hasUnsavedFormInput = () =>
+    screen === "form" && Object.values(form).some((v) => v.trim() !== "");
+
+  const goLanding = () => {
+    if (hasUnsavedFormInput()) {
+      setConfirmDiscardOpen(true);
+      return;
+    }
+    setScreen("landing");
+  };
+
+  const confirmDiscardAndGoLanding = () => {
+    setConfirmDiscardOpen(false);
+    setScreen("landing");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Toaster />
+      <AlertDialog open={confirmDiscardOpen} onOpenChange={setConfirmDiscardOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard this form?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved answers. Leaving now will discard everything you've typed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDiscardAndGoLanding}>Discard</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={pendingDeleteId != null} onOpenChange={(open) => !open && setPendingDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove this run?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes it from your recent runs on this device. This can't be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (pendingDeleteId) deleteRun(pendingDeleteId);
+                setPendingDeleteId(null);
+              }}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/70">
         <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setScreen("landing")}
+              onClick={goLanding}
               className="text-left flex items-center gap-2"
               aria-label="PositionPilot home"
             >
@@ -522,7 +591,7 @@ function Index() {
             </button>
             {screen !== "landing" && (
               <button
-                onClick={() => setScreen("landing")}
+                onClick={goLanding}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 ← Home
@@ -559,13 +628,16 @@ function Index() {
               </div>
               <h2 className="mt-2 text-3xl font-semibold tracking-tight">Tell us about your business</h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Fill in 8 fields. We'll draft your positioning foundation before generating the full strategy.
+                Fill in all {FIELDS.length} fields (<span className="text-destructive">*</span> required).
+                We'll draft your positioning foundation before generating the full strategy.
               </p>
             </div>
             <div className="grid gap-5 md:grid-cols-2">
               {FIELDS.map((f) => (
                 <div key={f.key} className={f.type === "textarea" ? "md:col-span-2" : ""}>
-                  <Label htmlFor={f.key} className="mb-2 block">{f.label}</Label>
+                  <Label htmlFor={f.key} className="mb-2 block">
+                    {f.label} <span className="text-destructive">*</span>
+                  </Label>
                   {(f as any).helper && (
                     <p className="mb-2 text-xs text-muted-foreground">{(f as any).helper}</p>
                   )}
@@ -637,7 +709,12 @@ function Index() {
                     <Button variant="ghost" size="sm" onClick={() => openRun(r)}>
                       View
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => deleteRun(r.generation_run_id)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => setPendingDeleteId(r.generation_run_id)}
+                    >
                       Remove
                     </Button>
                   </div>
