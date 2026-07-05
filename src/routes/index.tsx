@@ -93,10 +93,17 @@ function saveRecent(runs: RecentRun[]) {
 
 type Stage1Response = {
   generation_run_id?: string;
+  category_definition?: string;
   positioning_statement?: string;
+  before_after_transformation?: string;
+  memorable_hook?: string;
+  brand_philosophy?: string;
+  strategic_tension?: string;
   icp_summary?: string;
+  behavioral_signals?: string[];
   differentiation_pillars?: string[];
   buying_triggers?: string[];
+  customer_fears_and_risks?: string[];
   [k: string]: unknown;
 };
 
@@ -172,10 +179,17 @@ function normalizeStage1(raw: unknown): Stage1Response {
   }
   return {
     generation_run_id,
+    category_definition: data.positioning_output?.category_definition,
     positioning_statement: data.positioning_output?.positioning_statement,
+    before_after_transformation: data.positioning_output?.before_after_transformation,
+    memorable_hook: data.positioning_output?.memorable_hook,
+    brand_philosophy: data.positioning_output?.brand_philosophy,
+    strategic_tension: data.positioning_output?.strategic_tension,
     icp_summary: data.icp_output?.primary_target_persona,
+    behavioral_signals: data.icp_output?.behavioral_signals || [],
     differentiation_pillars: data.positioning_output?.differentiation_pillars || [],
     buying_triggers: data.icp_output?.buying_triggers || [],
+    customer_fears_and_risks: data.icp_output?.customer_fears_and_risks || [],
   };
 }
 
@@ -218,19 +232,23 @@ function SectionCopyBar({ label, text }: { label: string; text: string }) {
 }
 
 function formatPositioningSection(s1: Stage1Response): string {
-  return [
-    "POSITIONING STATEMENT",
-    s1.positioning_statement || "—",
+  const lines = ["CATEGORY", s1.category_definition || "—", "", "POSITIONING STATEMENT", s1.positioning_statement || "—"];
+  if (s1.before_after_transformation) lines.push("", "BEFORE / AFTER", s1.before_after_transformation);
+  if (s1.memorable_hook) lines.push("", "MEMORABLE HOOK", s1.memorable_hook);
+  if (s1.brand_philosophy) lines.push("", "BRAND PHILOSOPHY", s1.brand_philosophy);
+  if (s1.strategic_tension) lines.push("", "STRATEGIC TENSION", s1.strategic_tension);
+  lines.push(
     "",
     "DIFFERENTIATION PILLARS",
     ...(s1.differentiation_pillars?.length
       ? s1.differentiation_pillars.map((p, i) => `${i + 1}. ${p}`)
       : ["—"]),
-  ].join("\n");
+  );
+  return lines.join("\n");
 }
 
 function formatIcpSection(s1: Stage1Response): string {
-  const fears = (s1 as any).customer_fears as string[] | undefined;
+  const fears = s1.customer_fears_and_risks;
   const lines = [
     "ICP SUMMARY",
     s1.icp_summary || "—",
@@ -238,8 +256,11 @@ function formatIcpSection(s1: Stage1Response): string {
     "BUYING TRIGGERS",
     ...(s1.buying_triggers?.length ? s1.buying_triggers.map((t, i) => `${i + 1}. ${t}`) : ["—"]),
   ];
+  if (s1.behavioral_signals?.length) {
+    lines.push("", "BEHAVIORAL SIGNALS", ...s1.behavioral_signals.map((b, i) => `${i + 1}. ${b}`));
+  }
   if (fears?.length) {
-    lines.push("", "CUSTOMER FEARS", ...fears.map((f, i) => `${i + 1}. ${f}`));
+    lines.push("", "CUSTOMER FEARS & RISKS", ...fears.map((f, i) => `${i + 1}. ${f}`));
   }
   return lines.join("\n");
 }
@@ -836,6 +857,12 @@ function Index() {
               <p className="mt-2 text-sm text-muted-foreground">
                 Approve to generate the full strategy across all agents.
               </p>
+              {stage1.category_definition && (
+                <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
+                  Category: {stage1.category_definition}
+                </div>
+              )}
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <Card>
@@ -922,6 +949,24 @@ function Index() {
                   callRewrite("Buying Trigger", currentText, form.company_name)
                 }
               />
+              {stage1.before_after_transformation && (
+                <Section title="Before / After Transformation" body={stage1.before_after_transformation} />
+              )}
+              {stage1.memorable_hook && (
+                <Section title="Memorable Hook" body={stage1.memorable_hook} />
+              )}
+              {stage1.brand_philosophy && (
+                <Section title="Brand Philosophy" body={stage1.brand_philosophy} />
+              )}
+              {stage1.strategic_tension && (
+                <Section title="Strategic Tension" body={stage1.strategic_tension} />
+              )}
+              {stage1.behavioral_signals && stage1.behavioral_signals.length > 0 && (
+                <Section title="Behavioral Signals" items={stage1.behavioral_signals} />
+              )}
+              {stage1.customer_fears_and_risks && stage1.customer_fears_and_risks.length > 0 && (
+                <Section title="Customer Fears & Risks" items={stage1.customer_fears_and_risks} />
+              )}
             </div>
             <div className="flex flex-wrap justify-end gap-3">
               <Button variant="outline" onClick={startOver} disabled={loading}>
@@ -975,6 +1020,13 @@ function Index() {
               {/* POSITIONING */}
               <TabsContent value="positioning" className="mt-8 space-y-8">
                 <SectionCopyBar label="Positioning" text={formatPositioningSection(stage1 || {})} />
+                {stage1?.category_definition && (
+                  <Block title="Category" description="The category this positioning stakes out.">
+                    <p className="text-base leading-relaxed text-foreground whitespace-pre-wrap">
+                      {stage1.category_definition}
+                    </p>
+                  </Block>
+                )}
                 <Block title="Positioning Statement" description="The single sentence that defines who you serve and how you win.">
                   <div className="flex items-start gap-3">
                     <p className="flex-1 text-base leading-relaxed text-foreground whitespace-pre-wrap">
@@ -983,9 +1035,37 @@ function Index() {
                     <CopyButton text={stage1?.positioning_statement || ""} />
                   </div>
                 </Block>
+                {stage1?.before_after_transformation && (
+                  <Block title="Before / After Transformation" description="Life before this product versus life after it.">
+                    <p className="text-base leading-relaxed text-foreground whitespace-pre-wrap">
+                      {stage1.before_after_transformation}
+                    </p>
+                  </Block>
+                )}
                 <Block title="Differentiation Pillars" description="The proof points that make the positioning defensible.">
                   <NumberedList items={stage1?.differentiation_pillars} />
                 </Block>
+                {stage1?.memorable_hook && (
+                  <Block title="Memorable Hook" description="The line that sticks after the pitch ends.">
+                    <p className="text-base leading-relaxed text-foreground whitespace-pre-wrap">
+                      {stage1.memorable_hook}
+                    </p>
+                  </Block>
+                )}
+                {stage1?.brand_philosophy && (
+                  <Block title="Brand Philosophy" description="The belief system underpinning the positioning.">
+                    <p className="text-base leading-relaxed text-foreground whitespace-pre-wrap">
+                      {stage1.brand_philosophy}
+                    </p>
+                  </Block>
+                )}
+                {stage1?.strategic_tension && (
+                  <Block title="Strategic Tension" description="The tension this positioning deliberately picks a side on.">
+                    <p className="text-base leading-relaxed text-foreground whitespace-pre-wrap">
+                      {stage1.strategic_tension}
+                    </p>
+                  </Block>
+                )}
               </TabsContent>
 
               {/* ICP */}
@@ -1002,9 +1082,14 @@ function Index() {
                 <Block title="Buying Triggers" description="The events that move them from passive to actively shopping.">
                   <NumberedList items={stage1?.buying_triggers} />
                 </Block>
-                {Array.isArray((stage1 as any)?.customer_fears) && (stage1 as any).customer_fears.length > 0 && (
-                  <Block title="Customer Fears" description="What keeps them from buying — and what your messaging must disarm.">
-                    <NumberedList items={(stage1 as any).customer_fears as string[]} />
+                {stage1?.behavioral_signals && stage1.behavioral_signals.length > 0 && (
+                  <Block title="Behavioral Signals" description="Observable behavior that signals fit before they even talk to sales.">
+                    <NumberedList items={stage1.behavioral_signals} />
+                  </Block>
+                )}
+                {stage1?.customer_fears_and_risks && stage1.customer_fears_and_risks.length > 0 && (
+                  <Block title="Customer Fears & Risks" description="What keeps them from buying — and what your messaging must disarm.">
+                    <NumberedList items={stage1.customer_fears_and_risks} />
                   </Block>
                 )}
               </TabsContent>
