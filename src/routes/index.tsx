@@ -1372,7 +1372,7 @@ function Landing({ onStart }: { onStart: () => void }) {
   ];
 
   const steps = [
-    { n: 1, title: "Tell us about your company", body: "Fill in 8 fields about your product, audience, and competitors." },
+    { n: 1, title: "Tell us about your company", body: `Fill in ${FIELDS.length} fields about your product, audience, and competitors.` },
     { n: 2, title: "Review your foundation", body: "Our AI builds your positioning and ICP. You approve before we continue." },
     { n: 3, title: "Get your full strategy", body: "5 specialized agents generate your complete GTM strategy in under 3 minutes." },
   ];
