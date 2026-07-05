@@ -448,10 +448,22 @@ function Index() {
     setError(null);
     setRawResponse(null);
     try {
-      // 1. Approve the run
+      // 1. Approve the run — send the edited foundation along so review-screen
+      // changes (pillars, triggers, statement, persona) land in the stored
+      // output before Stage 2 reads it back, instead of being discarded.
       const { res: approveRes, text: approveText } = await postWebhook(
         "approve",
-        { generation_run_id: runId },
+        {
+          generation_run_id: runId,
+          positioning_output: {
+            positioning_statement: stage1.positioning_statement,
+            differentiation_pillars: stage1.differentiation_pillars,
+          },
+          icp_output: {
+            primary_target_persona: stage1.icp_summary,
+            buying_triggers: stage1.buying_triggers,
+          },
+        },
         "Approve",
       );
       if (!approveRes.ok) {
