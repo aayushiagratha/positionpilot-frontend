@@ -29,8 +29,9 @@ Server function → n8n webhook "approve"
    ▼
    │ 3. Generate full strategy
    ▼
-Server function → n8n webhook "stage2"  (Messaging → GTM → SEO agents,
-   │  Serper web search feeds real competitor/SEO data in)
+Server function → n8n webhook "stage2"  (Messaging + GTM agents run in
+   │  parallel; Serper web search runs alongside them and feeds the SEO
+   │  agent, which runs once search results are back)
    ▼
 Results screen (5 tabs: Positioning / ICP / Messaging / GTM / SEO)
 ```
@@ -76,18 +77,21 @@ never talks to n8n directly, and never sees the webhook URLs or API key.
   host yet. **Fragile** — breaks on local restart; migrating to Railway has
   been deliberately deferred until more features are built.
 - Three webhooks, matching the three stages above:
-  - **Stage 1** — "Build Prompts" code node constructs a sequential
-    reasoning prompt for positioning and ICP, calls OpenRouter
-    (`deepseek/deepseek-v4-flash`), and returns a rich structured object per
-    agent (see Data model below).
+  - **Stage 1** — "Build Prompts" code node constructs prompts with a
+    sequential reasoning structure (steps 0-8) inside each individual
+    prompt, then calls OpenRouter (`deepseek/deepseek-v4-flash`) for the
+    Positioning and ICP agents **in parallel** (both fed from the same
+    "Build Prompts" node) — returns a rich structured object per agent
+    (see Data model below).
   - **Approve** — a Postgres node does
     `output = output || $edited_patch` (jsonb merge) so edited fields
     overwrite while everything the user didn't touch survives, then flips
     `status` to `'approved'`.
-  - **Stage 2** — runs Messaging → GTM → SEO agents in sequence against the
-    approved foundation. Includes a **Serper** node (Header Auth, dedicated
-    "Serper API" credential — not the OpenRouter one) for live web search
-    feeding SEO/competitor data into the prompts.
+  - **Stage 2** — Messaging and GTM agents run **in parallel** against the
+    approved foundation. A **Serper** node (Header Auth, dedicated
+    "Serper API" credential — not the OpenRouter one) runs alongside them
+    for live web search; the SEO agent is the only one gated — it runs once
+    Serper's results are back, then all three converge before persisting.
 - **Postgres** (`positionpilot` database, `strategy_runs` table): one row per
   `generation_run_id`, jsonb `output` column per agent, `status` column
   (`pending_review` → `approved` → `full`/`draft` as seen in the app's
