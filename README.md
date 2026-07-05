@@ -48,7 +48,9 @@ Copy `.env.example` to `.env` and fill in:
 | `WAITLIST_NOTIFY_EMAIL` | Where new waitlist signups get reported |
 
 The n8n/Postgres backend isn't included in this repo — it runs separately
-(currently local + ngrok tunnel; see ARCHITECTURE.md for details).
+(currently local + ngrok tunnel; see ARCHITECTURE.md for details). Workflow
+JSON exports, schema, and setup instructions for that backend live in
+[aayushiagratha/positionpilot](https://github.com/aayushiagratha/positionpilot).
 
 ## Scripts
 
