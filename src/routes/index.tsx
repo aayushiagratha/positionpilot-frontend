@@ -17,10 +17,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { callPositionPilotWebhook } from "@/lib/api/webhook.functions";
 import { joinWaitlist } from "@/lib/api/waitlist.functions";
+import { rewriteField } from "@/lib/api/rewrite.functions";
 
 
 export const Route = createFileRoute("/")({
@@ -329,6 +331,16 @@ async function postWebhook(stage: WebhookStage, payload: unknown, label: string,
   }
 }
 
+async function callRewrite(fieldLabel: string, currentText: string, companyName?: string) {
+  try {
+    const result = await rewriteField({ data: { fieldLabel, currentText, companyName } });
+    return result.rewritten;
+  } catch (err) {
+    const message = formatUnknownError(err, "Rewrite request failed before a response was received");
+    throw new Error(message);
+  }
+}
+
 function Index() {
   const [screen, setScreen] = useState<"landing" | "form" | "review" | "results">("landing");
   const [form, setForm] = useState<FormState>(() =>
@@ -343,6 +355,7 @@ function Index() {
   const [rawResponse, setRawResponse] = useState<string | null>(null);
   const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [rewriting, setRewriting] = useState<"positioning_statement" | "icp_summary" | null>(null);
 
   useEffect(() => {
     setRecent(loadRecent());
@@ -403,6 +416,24 @@ function Index() {
       toast.error(msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFieldRewrite = async (
+    field: "positioning_statement" | "icp_summary",
+    label: string,
+  ) => {
+    if (!stage1) return;
+    const currentText = field === "positioning_statement" ? stage1.positioning_statement : stage1.icp_summary;
+    if (!currentText?.trim()) return;
+    setRewriting(field);
+    try {
+      const rewritten = await callRewrite(label, currentText, form.company_name);
+      setStage1({ ...stage1, [field]: rewritten });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Rewrite failed");
+    } finally {
+      setRewriting(null);
     }
   };
 
@@ -796,8 +827,13 @@ function Index() {
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <Card>
-                <CardHeader>
+                <CardHeader className="flex-row items-center justify-between space-y-0">
                   <CardTitle className="text-base">Positioning Statement</CardTitle>
+                  <RewriteButton
+                    label="Rewrite Positioning Statement"
+                    loading={rewriting === "positioning_statement"}
+                    onClick={() => handleFieldRewrite("positioning_statement", "Positioning Statement")}
+                  />
                 </CardHeader>
                 <CardContent>
                   <Textarea
@@ -808,8 +844,13 @@ function Index() {
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader>
+                <CardHeader className="flex-row items-center justify-between space-y-0">
                   <CardTitle className="text-base">ICP Summary</CardTitle>
+                  <RewriteButton
+                    label="Rewrite ICP Summary"
+                    loading={rewriting === "icp_summary"}
+                    onClick={() => handleFieldRewrite("icp_summary", "ICP Summary")}
+                  />
                 </CardHeader>
                 <CardContent>
                   <Textarea
@@ -827,6 +868,23 @@ function Index() {
                   next[i] = value;
                   setStage1({ ...stage1, differentiation_pillars: next });
                 }}
+                onItemAdd={() => {
+                  setStage1({
+                    ...stage1,
+                    differentiation_pillars: [...(stage1.differentiation_pillars || []), ""],
+                  });
+                }}
+                onItemRemove={(i) => {
+                  setStage1({
+                    ...stage1,
+                    differentiation_pillars: (stage1.differentiation_pillars || []).filter(
+                      (_, idx) => idx !== i,
+                    ),
+                  });
+                }}
+                onItemRewrite={(_, currentText) =>
+                  callRewrite("Differentiation Pillar", currentText, form.company_name)
+                }
               />
               <Section
                 title="Buying Triggers"
@@ -836,6 +894,21 @@ function Index() {
                   next[i] = value;
                   setStage1({ ...stage1, buying_triggers: next });
                 }}
+                onItemAdd={() => {
+                  setStage1({
+                    ...stage1,
+                    buying_triggers: [...(stage1.buying_triggers || []), ""],
+                  });
+                }}
+                onItemRemove={(i) => {
+                  setStage1({
+                    ...stage1,
+                    buying_triggers: (stage1.buying_triggers || []).filter((_, idx) => idx !== i),
+                  });
+                }}
+                onItemRewrite={(_, currentText) =>
+                  callRewrite("Buying Trigger", currentText, form.company_name)
+                }
               />
             </div>
             <div className="flex flex-wrap justify-end gap-3">
@@ -1342,44 +1415,114 @@ function Landing({ onStart }: { onStart: () => void }) {
   );
 }
 
+function RewriteButton({
+  label,
+  loading,
+  onClick,
+}: {
+  label: string;
+  loading: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      className="shrink-0 text-muted-foreground hover:text-foreground"
+      aria-label={label}
+      disabled={loading}
+      onClick={onClick}
+    >
+      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+    </Button>
+  );
+}
+
 function Section({
   title,
   body,
   items,
   onItemChange,
+  onItemAdd,
+  onItemRemove,
+  onItemRewrite,
 }: {
   title: string;
   body?: string;
   items?: string[];
   onItemChange?: (index: number, value: string) => void;
+  onItemAdd?: () => void;
+  onItemRemove?: (index: number) => void;
+  onItemRewrite?: (index: number, currentText: string) => Promise<string>;
 }) {
   const hasItems = items && items.length > 0;
+  const [rewritingIndex, setRewritingIndex] = useState<number | null>(null);
+
+  const handleRewrite = async (i: number, text: string) => {
+    if (!onItemRewrite || !onItemChange || !text.trim()) return;
+    setRewritingIndex(i);
+    try {
+      const rewritten = await onItemRewrite(i, text);
+      onItemChange(i, rewritten);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Rewrite failed");
+    } finally {
+      setRewritingIndex(null);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        {hasItems ? (
-          onItemChange ? (
-            <div className="space-y-2">
-              {items!.map((item, i) => (
+        {onItemChange ? (
+          <div className="space-y-2">
+            {(items || []).map((item, i) => (
+              <div key={i} className="flex items-start gap-2">
                 <Textarea
-                  key={i}
                   value={item}
                   rows={2}
                   aria-label={`${title} ${i + 1}`}
                   onChange={(e) => onItemChange(i, e.target.value)}
+                  className="flex-1"
                 />
-              ))}
-            </div>
-          ) : (
-            <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-foreground">
-              {items!.map((item, i) => (
-                <li key={i} className="whitespace-pre-wrap">{item}</li>
-              ))}
-            </ul>
-          )
+                {onItemRewrite && (
+                  <RewriteButton
+                    label={`Rewrite ${title} item ${i + 1}`}
+                    loading={rewritingIndex === i}
+                    onClick={() => handleRewrite(i, item)}
+                  />
+                )}
+                {onItemRemove && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                    aria-label={`Remove ${title} item ${i + 1}`}
+                    onClick={() => onItemRemove(i)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+            {onItemAdd && (
+              <Button type="button" variant="outline" size="sm" onClick={onItemAdd}>
+                <Plus className="mr-1.5 h-4 w-4" />
+                Add {title.replace(/s$/, "")}
+              </Button>
+            )}
+          </div>
+        ) : hasItems ? (
+          <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed text-foreground">
+            {items!.map((item, i) => (
+              <li key={i} className="whitespace-pre-wrap">{item}</li>
+            ))}
+          </ul>
         ) : (
           <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground">
             {body || "—"}
