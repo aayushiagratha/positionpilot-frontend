@@ -26,5 +26,7 @@ export function getServerConfig() {
     openrouterApiKey: process.env.OPENROUTER_API_KEY,
     supabaseUrl: process.env.SUPABASE_URL,
     supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    resendApiKey: process.env.RESEND_API_KEY,
+    waitlistNotifyEmail: process.env.WAITLIST_NOTIFY_EMAIL,
   };
 }
