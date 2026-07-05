@@ -479,10 +479,16 @@ function Index() {
           positioning_output: {
             positioning_statement: stage1.positioning_statement,
             differentiation_pillars: stage1.differentiation_pillars,
+            before_after_transformation: stage1.before_after_transformation,
+            memorable_hook: stage1.memorable_hook,
+            brand_philosophy: stage1.brand_philosophy,
+            strategic_tension: stage1.strategic_tension,
           },
           icp_output: {
             primary_target_persona: stage1.icp_summary,
             buying_triggers: stage1.buying_triggers,
+            behavioral_signals: stage1.behavioral_signals,
+            customer_fears_and_risks: stage1.customer_fears_and_risks,
           },
         },
         "Approve",
@@ -949,24 +955,88 @@ function Index() {
                   callRewrite("Buying Trigger", currentText, form.company_name)
                 }
               />
-              {stage1.before_after_transformation && (
-                <Section title="Before / After Transformation" body={stage1.before_after_transformation} />
-              )}
-              {stage1.memorable_hook && (
-                <Section title="Memorable Hook" body={stage1.memorable_hook} />
-              )}
-              {stage1.brand_philosophy && (
-                <Section title="Brand Philosophy" body={stage1.brand_philosophy} />
-              )}
-              {stage1.strategic_tension && (
-                <Section title="Strategic Tension" body={stage1.strategic_tension} />
-              )}
-              {stage1.behavioral_signals && stage1.behavioral_signals.length > 0 && (
-                <Section title="Behavioral Signals" items={stage1.behavioral_signals} />
-              )}
-              {stage1.customer_fears_and_risks && stage1.customer_fears_and_risks.length > 0 && (
-                <Section title="Customer Fears & Risks" items={stage1.customer_fears_and_risks} />
-              )}
+              <Section
+                title="Before / After Transformation"
+                body={stage1.before_after_transformation}
+                onBodyChange={(value) => setStage1({ ...stage1, before_after_transformation: value })}
+                onBodyRewrite={(currentText) =>
+                  callRewrite("Before / After Transformation", currentText, form.company_name)
+                }
+              />
+              <Section
+                title="Memorable Hook"
+                body={stage1.memorable_hook}
+                onBodyChange={(value) => setStage1({ ...stage1, memorable_hook: value })}
+                onBodyRewrite={(currentText) =>
+                  callRewrite("Memorable Hook", currentText, form.company_name)
+                }
+              />
+              <Section
+                title="Brand Philosophy"
+                body={stage1.brand_philosophy}
+                onBodyChange={(value) => setStage1({ ...stage1, brand_philosophy: value })}
+                onBodyRewrite={(currentText) =>
+                  callRewrite("Brand Philosophy", currentText, form.company_name)
+                }
+              />
+              <Section
+                title="Strategic Tension"
+                body={stage1.strategic_tension}
+                onBodyChange={(value) => setStage1({ ...stage1, strategic_tension: value })}
+                onBodyRewrite={(currentText) =>
+                  callRewrite("Strategic Tension", currentText, form.company_name)
+                }
+              />
+              <Section
+                title="Behavioral Signals"
+                items={stage1.behavioral_signals}
+                onItemChange={(i, value) => {
+                  const next = [...(stage1.behavioral_signals || [])];
+                  next[i] = value;
+                  setStage1({ ...stage1, behavioral_signals: next });
+                }}
+                onItemAdd={() => {
+                  setStage1({
+                    ...stage1,
+                    behavioral_signals: [...(stage1.behavioral_signals || []), ""],
+                  });
+                }}
+                onItemRemove={(i) => {
+                  setStage1({
+                    ...stage1,
+                    behavioral_signals: (stage1.behavioral_signals || []).filter((_, idx) => idx !== i),
+                  });
+                }}
+                onItemRewrite={(_, currentText) =>
+                  callRewrite("Behavioral Signal", currentText, form.company_name)
+                }
+              />
+              <Section
+                title="Customer Fears & Risks"
+                items={stage1.customer_fears_and_risks}
+                onItemChange={(i, value) => {
+                  const next = [...(stage1.customer_fears_and_risks || [])];
+                  next[i] = value;
+                  setStage1({ ...stage1, customer_fears_and_risks: next });
+                }}
+                onItemAdd={() => {
+                  setStage1({
+                    ...stage1,
+                    customer_fears_and_risks: [...(stage1.customer_fears_and_risks || []), ""],
+                  });
+                }}
+                onItemRemove={(i) => {
+                  setStage1({
+                    ...stage1,
+                    customer_fears_and_risks: (stage1.customer_fears_and_risks || []).filter(
+                      (_, idx) => idx !== i,
+                    ),
+                  });
+                }}
+                onItemRewrite={(_, currentText) =>
+                  callRewrite("Customer Fear or Risk", currentText, form.company_name)
+                }
+              />
             </div>
             <div className="flex flex-wrap justify-end gap-3">
               <Button variant="outline" onClick={startOver} disabled={loading}>
@@ -1544,6 +1614,8 @@ function Section({
   onItemAdd,
   onItemRemove,
   onItemRewrite,
+  onBodyChange,
+  onBodyRewrite,
 }: {
   title: string;
   body?: string;
@@ -1552,9 +1624,12 @@ function Section({
   onItemAdd?: () => void;
   onItemRemove?: (index: number) => void;
   onItemRewrite?: (index: number, currentText: string) => Promise<string>;
+  onBodyChange?: (value: string) => void;
+  onBodyRewrite?: (currentText: string) => Promise<string>;
 }) {
   const hasItems = items && items.length > 0;
   const [rewritingIndex, setRewritingIndex] = useState<number | null>(null);
+  const [rewritingBody, setRewritingBody] = useState(false);
 
   const handleRewrite = async (i: number, text: string) => {
     if (!onItemRewrite || !onItemChange || !text.trim()) return;
@@ -1568,6 +1643,43 @@ function Section({
       setRewritingIndex(null);
     }
   };
+
+  const handleBodyRewrite = async () => {
+    if (!onBodyRewrite || !onBodyChange || !body?.trim()) return;
+    setRewritingBody(true);
+    try {
+      const rewritten = await onBodyRewrite(body);
+      onBodyChange(rewritten);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Rewrite failed");
+    } finally {
+      setRewritingBody(false);
+    }
+  };
+
+  if (onBodyChange) {
+    return (
+      <Card>
+        <CardHeader className="flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-base">{title}</CardTitle>
+          {onBodyRewrite && (
+            <RewriteButton
+              label={`Rewrite ${title}`}
+              loading={rewritingBody}
+              onClick={handleBodyRewrite}
+            />
+          )}
+        </CardHeader>
+        <CardContent>
+          <Textarea
+            rows={4}
+            value={body || ""}
+            onChange={(e) => onBodyChange(e.target.value)}
+          />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
