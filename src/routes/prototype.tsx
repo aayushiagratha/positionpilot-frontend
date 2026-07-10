@@ -16,10 +16,18 @@ const chalkSlate = {
 
 function PrototypePage() {
   return (
-    <div
-      className="relative flex h-screen w-full items-center justify-center overflow-hidden"
-      style={{ backgroundColor: chalkSlate.background }}
-    >
+    <div className="relative flex h-screen w-full items-center justify-center overflow-hidden">
+      {/* DottedSurface is position:fixed with z-index:-1, which escapes to
+          the document's root stacking context. A plain background on this
+          wrapper would sit at the default stacking level (above -1) and
+          paint over the canvas, so the background needs its own fixed
+          layer further back than the canvas. */}
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 -z-10"
+        style={{ backgroundColor: chalkSlate.background }}
+      />
+
       <DottedSurface className="size-full" />
 
       <div className="absolute inset-0 flex items-center justify-center">
