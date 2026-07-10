@@ -29,7 +29,7 @@ export function DottedSurface({ className, ...props }: DottedSurfaceProps) {
     useEffect(() => {
         if (!containerRef.current) return;
 
-        const SEPARATION = 150;
+        const SEPARATION = 110;
         const AMOUNTX = 40;
         const AMOUNTY = 60;
 
@@ -43,7 +43,7 @@ export function DottedSurface({ className, ...props }: DottedSurfaceProps) {
             1,
             10000,
         );
-        camera.position.set(0, 355, 1220);
+        camera.position.set(0, 220, 750);
         camera.lookAt(0, 0, 0);
 
         const renderer = new THREE.WebGLRenderer({
@@ -87,10 +87,10 @@ export function DottedSurface({ className, ...props }: DottedSurfaceProps) {
 
         // Create material
         const material = new THREE.PointsMaterial({
-            size: 8,
+            size: 14,
             vertexColors: true,
             transparent: true,
-            opacity: 0.8,
+            opacity: 0.9,
             sizeAttenuation: true,
         });
 
