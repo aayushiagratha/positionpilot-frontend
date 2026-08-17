@@ -4,7 +4,7 @@ AI-powered GTM strategy generator. Give it 9 facts about your company and it
 drafts a full go-to-market strategy — positioning, ICP, messaging, GTM plan,
 and SEO — reviewable and editable before the final strategy is generated.
 
-Live: **[positionpilot-ai.vercel.app](https://positionpilot-ai.vercel.app)**
+Frontend deployed on Vercel: **[positionpilot-ai.vercel.app](https://positionpilot-ai.vercel.app)** — the backend n8n instance runs locally via ngrok tunnel, so it isn't always reachable. For a guaranteed-working demo, see the [4-minute walkthrough video](https://www.youtube.com/watch?v=R4FTsZzQAOc).
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for how the pipeline works end to end.
 
