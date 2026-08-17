@@ -9,8 +9,20 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RefTestRouteImport } from './routes/ref-test'
+import { Route as PrototypeRouteImport } from './routes/prototype'
 import { Route as IndexRouteImport } from './routes/index'
 
+const RefTestRoute = RefTestRouteImport.update({
+  id: '/ref-test',
+  path: '/ref-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrototypeRoute = PrototypeRouteImport.update({
+  id: '/prototype',
+  path: '/prototype',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +31,50 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/prototype': typeof PrototypeRoute
+  '/ref-test': typeof RefTestRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/prototype': typeof PrototypeRoute
+  '/ref-test': typeof RefTestRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/prototype': typeof PrototypeRoute
+  '/ref-test': typeof RefTestRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/prototype' | '/ref-test'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/prototype' | '/ref-test'
+  id: '__root__' | '/' | '/prototype' | '/ref-test'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PrototypeRoute: typeof PrototypeRoute
+  RefTestRoute: typeof RefTestRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/ref-test': {
+      id: '/ref-test'
+      path: '/ref-test'
+      fullPath: '/ref-test'
+      preLoaderRoute: typeof RefTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prototype': {
+      id: '/prototype'
+      path: '/prototype'
+      fullPath: '/prototype'
+      preLoaderRoute: typeof PrototypeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,6 +87,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PrototypeRoute: PrototypeRoute,
+  RefTestRoute: RefTestRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
