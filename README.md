@@ -60,3 +60,7 @@ JSON exports, schema, and setup instructions for that backend live in
 | `bun run build` | Production build |
 | `bun run lint` | Lint |
 | `bun run format` | Format with Prettier |
+
+## License
+
+MIT.
